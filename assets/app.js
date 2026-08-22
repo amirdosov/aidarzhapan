@@ -1100,6 +1100,11 @@
     return box;
   }
 
+  function parentWord(pid) {
+    var par = pid && BY[pid];
+    return t(par && par.sex === 'f' ? 'mother' : 'father');
+  }
+
   function openPerson(id) {
     var p = BY[id];
     if (!p) return;
@@ -1155,8 +1160,11 @@
     if (story) sheetBody.appendChild(el('p', 'card-story',
       esc(story[lang] || story.kk)));
 
-    [chipRow(t('father'), p.parent ? [p.parent] : null),
-     chipRow(t('mother'), p.parent2 ? [p.parent2] : null),
+    /* Подпись берём по полу самого родителя, а не по полю: в поле
+       parent человек попадает по тому, через кого он в шежіре, —
+       у Есета это мать, Мейрамгүл. */
+    [chipRow(parentWord(p.parent), p.parent ? [p.parent] : null),
+     chipRow(parentWord(p.parent2), p.parent2 ? [p.parent2] : null),
      chipRow(t('mates'), (KIN.mates[id] || []).map(function (m) { return m.id; })),
      chipRow(t('children'), CHILDREN[id]),
      chipRow(t('sibs'), (CHILDREN[p.parent] || []).filter(function (s) {
