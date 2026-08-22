@@ -461,7 +461,20 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   padding:12px 6px; transition:color .3s var(--ease), background .3s var(--ease);
 }
 .nav-btn.is-on{color:var(--gold); background:color-mix(in srgb, var(--gold) 12%, transparent)}
-.nav-close{background:var(--gold); color:var(--bg); letter-spacing:.2em}
+/* Полоса «назад/закрыть» — во всю ширину и в палец высотой:
+   на телефоне это главная кнопка, ею и закрывают карточку. */
+.nav.has-layer{padding:0 0 env(safe-area-inset-bottom); gap:0}
+.nav-close{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:60px; border-radius:0; padding:14px;
+  background:var(--gold); color:var(--bg);
+  font-size:14px; font-weight:700; letter-spacing:.16em;
+}
+.nav-close svg{
+  width:19px; height:19px; fill:none; stroke:currentColor;
+  stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;
+}
+.nav-close:active{filter:brightness(.92)}
 [data-theme="light"] .nav-close{color:#FFFDF8}
 
 /* ── слои: карточка и выбор себя ────────────────────────── */
@@ -568,7 +581,9 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   .sheet-body{border-radius:20px; max-height:84svh; padding-bottom:26px}
   .nav{left:auto; right:18px; bottom:18px; width:auto; border-radius:999px;
        border:1px solid var(--line-soft); padding:6px}
-  .nav-btn,.nav-close{padding:10px 18px}
+  .nav-btn{padding:10px 18px}
+  .nav.has-layer{padding:6px; border-radius:999px}
+  .nav-close{width:auto; min-height:0; border-radius:999px; padding:12px 26px}
 }
 
 /* ── шапка на узком экране ──────────────────────────────── */

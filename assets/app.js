@@ -1144,6 +1144,7 @@
       else closeSheet();
     });
     sheetBody.appendChild(top);
+    syncNavClose();
 
     var gal = PHOTOS[id] || [];
     if (gal.length) {
@@ -1445,6 +1446,8 @@
     node.hidden = false;
     document.body.classList.add('locked');
     navClose.hidden = false;
+    document.getElementById('nav').classList.add('has-layer');
+    syncNavClose();
     document.querySelectorAll('.nav-btn').forEach(function (b) { b.hidden = true; });
     /* Карточка живёт по своему адресу — его можно скопировать
        прямо из строки браузера и отправить как есть. */
@@ -1471,6 +1474,7 @@
     layer = null;
     document.body.classList.remove('locked');
     navClose.hidden = true;
+    document.getElementById('nav').classList.remove('has-layer');
     document.querySelectorAll('.nav-btn').forEach(function (b) { b.hidden = false; });
   }
   function closeSheet() { closeLayer(); }
@@ -1490,7 +1494,19 @@
   document.querySelectorAll('[data-close]').forEach(function (n) {
     n.addEventListener('click', closeLayer);
   });
-  navClose.addEventListener('click', closeLayer);
+  /* Широкая полоса внизу — главная кнопка на телефоне: до неё
+     дотягивается большой палец. Поэтому она делает то же, что
+     стрелка в углу карточки: сначала шаг назад, и только с первой
+     карточки — закрыть. */
+  function syncNavClose() {
+    var deep = layer === sheet && cardStack.length;
+    document.getElementById('navCloseLabel').textContent =
+      deep ? t('back') : t('close');
+  }
+  navClose.addEventListener('click', function () {
+    if (layer === sheet && cardStack.length) openPerson(cardStack.pop(), true);
+    else closeLayer();
+  });
   document.addEventListener('keydown', function (e) {
     if (lbOpen) {
       if (e.key === 'Escape') closeLB();
