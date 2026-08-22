@@ -124,6 +124,25 @@
     shareEgo:  { kk: '{n}, мынау сіздің шежіреңіз',
                  ru: '{n}, это ваше шежіре' },
     copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
+
+    modeBranch:  { kk: 'Тармақ', ru: 'Ветка' },
+    modeGen:     { kk: 'Ұрпақ', ru: 'Колена' },
+    branchTitle: { kk: 'Кімнен кім тарайды', ru: 'Кто от кого' },
+    branchLede:  { kk: 'Санды бассаңыз — балалары ашылады. Есімді бассаңыз — сол кісі',
+                   ru: 'Нажмите на число — раскроются дети. На имя — карточка' },
+    more:        { kk: 'Тағы {n}', ru: 'Ещё {n}' },
+    noKids:      { kk: 'Балалары жазылмаған', ru: 'Дети не записаны' },
+    kidsOf:      { kk: '{n} бала', ru: 'детей: {n}' },
+    orphanHead:  { kk: 'Ата-анасы жазылмағандар', ru: 'Родитель не записан' },
+    mateHead:    { kk: 'Жұбайы арқылы', ru: 'Вошли через брак' },
+    mateOf:      { kk: '{n} жұбайы', ru: 'супруг(а): {n}' },
+    showBranch:  { kk: 'Тармағын көрсету', ru: 'Показать ветку' },
+    sonOf:       { kk: '{n} ұлы', ru: 'отец: {n}' },
+    dauOf:       { kk: '{n} қызы', ru: 'отец: {n}' },
+    kidOf:       { kk: '{n} баласы', ru: 'отец: {n}' },
+    sonOfF:      { kk: '{n} ұлы', ru: 'мать: {n}' },
+    dauOfF:      { kk: '{n} қызы', ru: 'мать: {n}' },
+    kidOfF:      { kk: '{n} баласы', ru: 'мать: {n}' },
     openedAs:  { kk: 'Сайт {n} ретінде ашылды · жоғарыдан ауыстыруға болады',
                  ru: 'Сайт открыт как {n} · поменять можно в шапке' }
   };
@@ -212,6 +231,39 @@
     document.body.removeChild(box);
   }
 
+  /* Казахский родительный падеж: «Қосанның ұлы», «Ізбасардың қызы»,
+     «Айгүлдің баласы». Окончание выбирается по последней букве
+     и по последней гласной — иначе подпись читается коряво. */
+  function poss(name) {
+    var s = String(name).trim();
+    var last = s.slice(-1).toLowerCase();
+    var vowels = s.toLowerCase().match(/[аәеёиоөуұүыіэюя]/g) || [];
+    var soft = /[әеёөүіи]/.test(vowels[vowels.length - 1] || 'а');
+    var set;
+    if (/[аәеёиоөұүыіэюямнң]/.test(last)) set = ['ның', 'нің'];  // гласные, м, н, ң
+    else if (/[йужзлр]/.test(last))       set = ['дың', 'дің'];  // й, у, ж, з, л, р
+    else                                  set = ['тың', 'тің'];  // глухие
+    return s + set[soft ? 1 : 0];
+  }
+
+  /* Чей он сын или дочь — этим и различаются тёзки: два Мансура,
+     два Кенжебека, две Сымбат. */
+  function parentPhrase(p) {
+    var par = p.parent && BY[p.parent];
+    if (par) {
+      var key = (p.sex === 'm' ? 'sonOf' : p.sex === 'f' ? 'dauOf' : 'kidOf') +
+                (par.sex === 'f' ? 'F' : '');
+      return t(key, { n: lang === 'kk' ? poss(par.name) : par.name });
+    }
+    /* Жёны и мужья попали в шежіре не через родителей, а через пару —
+       их и называем по паре, иначе строка остаётся немой. */
+    var mate = (KIN.mates[p.id] || [])[0];
+    if (mate && BY[mate.id]) {
+      return t('mateOf', { n: lang === 'kk' ? poss(BY[mate.id].name) : BY[mate.id].name });
+    }
+    return '';
+  }
+
   var CHILDREN = {};
   DATA.people.forEach(function (p) {
     [p.parent, p.parent2].forEach(function (par) {
@@ -284,6 +336,7 @@
 
       var isMe = (p.id === ego);
       var step = el('article', 'step reveal' + (isMe ? ' is-me' : ''));
+      step.dataset.id    = p.id;
       step.dataset.name  = p.name;
       step.dataset.era   = lastEra ? t('era', { r: ROMAN[lastEra] }) : '';
       step.dataset.roman = lastEra ? ROMAN[lastEra] : '';
@@ -323,7 +376,7 @@
   }
 
   /* ── список людей ───────────────────────────────────── */
-  function personRow(p, withRel) {
+  function personRow(p, withRel, withParent) {
     var row = el('button', 'row' + (p.id === ego ? ' is-me' : ''));
     row.type = 'button';
     row.addEventListener('click', function () { openPerson(p.id); });
@@ -345,6 +398,10 @@
     var sub = [];
     var y = years(p); if (y) sub.push(esc(y));
     if (p.gen) sub.push(t('genLabel', { n: p.gen }));
+    if (withParent) {
+      var who = parentPhrase(p);
+      if (who) sub.push(esc(who));
+    }
     mid.appendChild(el('span', 'row-sub', sub.join(' · ')));
     row.appendChild(mid);
 
@@ -360,9 +417,172 @@
     return row;
   }
 
-  function renderTree() {
+  /* ── ветка: кто от кого ─────────────────────────────
+     Список по коленам показывает, кто в каком поколении, но
+     одиннадцать сыновей Қосана идут в нём одиннадцатью строками
+     подряд без всякой связи между собой. Здесь наоборот: сверху
+     путь от Адая до выбранного, ниже — его потомки с отступами.
+     Оба взгляда нужны, поэтому переключатель, а не замена. */
+  var treeMode = localStorage.getItem('az-tree-mode') || 'branch';
+  var focusId  = null;
+  var OPEN = {};
+  var MORE = {};
+  var crumbsAll = false;
+  var SHOW_FIRST = 4;
+
+  var ROOT = (DATA.people[0] || {}).id;
+  var ORPHANS = DATA.people.filter(function (p) {
+    return p.id !== ROOT && (!p.parent || !BY[p.parent]);
+  }).map(function (p) { return p.id; });
+  /* Вошедшие через брак — не пробел в шежіре, а норма: у жены
+     свой род. Пробел — это когда неизвестно вообще ничего. */
+  var INLAWS = ORPHANS.filter(function (id) { return (KIN.mates[id] || []).length; });
+  var LOST   = ORPHANS.filter(function (id) { return !(KIN.mates[id] || []).length; });
+
+  /* Шежіре открывают ради живых, поэтому по умолчанию встаём не
+     на Адая, а на отца выбранного: вокруг сразу свои. */
+  function focusPerson() {
+    if (focusId && BY[focusId]) return focusId;
+    if (ego) {
+      var p = BY[ego];
+      return (p.parent && BY[p.parent]) ? p.parent : ego;
+    }
+    return ROOT;
+  }
+
+  function ancestryOf(id) {
+    var out = [], p = BY[id], seen = {};
+    while (p && p.parent && BY[p.parent] && !seen[p.parent]) {
+      seen[p.parent] = 1;
+      out.unshift(BY[p.parent]);
+      p = BY[p.parent];
+    }
+    return out;
+  }
+
+  function setFocus(id) {
+    if (!BY[id]) return;
+    focusId = id;
+    OPEN = {}; MORE = {}; crumbsAll = false;
+    treeMode = 'branch';
+    localStorage.setItem('az-tree-mode', treeMode);
+    if (view !== 'tree') setView('tree');
+    else { window.scrollTo(0, 0); renderTree(); }
+  }
+
+  function branchNode(id, depth) {
+    var node = el('div', 'node' + (depth ? ' is-deep' : ''));
+    node.style.setProperty('--d', Math.min(depth, 5));
+
+    var kids = CHILDREN[id] || [];
+    if (kids.length) {
+      var tw = el('button', 'tw' + (OPEN[id] ? ' is-open' : ''), String(kids.length));
+      tw.type = 'button';
+      tw.setAttribute('aria-label', t('kidsOf', { n: kids.length }));
+      tw.addEventListener('click', function () {
+        OPEN[id] = !OPEN[id];
+        renderTree(true);
+      });
+      node.appendChild(tw);
+    } else {
+      node.appendChild(el('span', 'tw is-leaf'));
+    }
+
+    node.appendChild(personRow(BY[id], true));
+    return node;
+  }
+
+  /* У Қосана одиннадцать детей, у Келімберді восемь: показываем
+     четверых, остальных — по нажатию, чтобы ветка не расползалась. */
+  function branchLevel(id, depth, host) {
+    var kids = CHILDREN[id] || [];
+    var shown = (MORE[id] || kids.length <= SHOW_FIRST + 1)
+      ? kids : kids.slice(0, SHOW_FIRST);
+    shown.forEach(function (kid) {
+      host.appendChild(branchNode(kid, depth));
+      if (OPEN[kid]) branchLevel(kid, depth + 1, host);
+    });
+    if (shown.length < kids.length) {
+      var b = el('button', 'more', esc(t('more', { n: kids.length - shown.length })));
+      b.type = 'button';
+      b.style.setProperty('--d', Math.min(depth, 5));
+      b.addEventListener('click', function () { MORE[id] = true; renderTree(true); });
+      host.appendChild(b);
+    }
+  }
+
+  function renderBranch(host) {
+    var id = focusPerson();
+
+    /* Путь от Адая — двадцать имён, на телефоне это четыре строки
+       над самой веткой. Показываем начало и двух последних,
+       остальные — по нажатию на многоточие. */
+    var line = ancestryOf(id);
+    if (line.length) {
+      var crumbs = el('div', 'crumbs');
+      var show = (!crumbsAll && line.length > 4)
+        ? [line[0], null].concat(line.slice(-2)) : line;
+      show.forEach(function (a) {
+        if (!a) {
+          var dots = el('button', 'crumb is-dots', '…');
+          dots.type = 'button';
+          dots.title = String(line.length);
+          dots.addEventListener('click', function () {
+            crumbsAll = true; renderTree(true);
+          });
+          crumbs.appendChild(dots);
+          return;
+        }
+        var c = el('button', 'crumb', esc(a.name));
+        c.type = 'button';
+        c.addEventListener('click', function () { setFocus(a.id); });
+        crumbs.appendChild(c);
+      });
+      host.appendChild(crumbs);
+    }
+
+    var head = el('div', 'branch-head');
+    head.appendChild(personRow(BY[id], true));
+    host.appendChild(head);
+
+    if ((CHILDREN[id] || []).length) branchLevel(id, 1, host);
+    else host.appendChild(el('p', 'empty', t('noKids')));
+
+    /* От Адая ветка доходит не до всех: у части родителя нет,
+       часть вошла через брак. Прятать их нельзя — родня та же. */
+    if (id === ROOT) {
+      [[t('mateHead'), INLAWS], [t('orphanHead'), LOST]].forEach(function (pair) {
+        if (!pair[1].length) return;
+        host.appendChild(el('div', 'group-head',
+          esc(pair[0]) + ' <span>' + pair[1].length + '</span>'));
+        pair[1].forEach(function (o) {
+          host.appendChild(personRow(BY[o], true, true));
+        });
+      });
+    }
+  }
+
+  function renderTree(keep) {
     var host = document.getElementById('treeList');
+    var y = window.scrollY;
     host.innerHTML = '';
+
+    document.getElementById('treeTitle').textContent =
+      treeMode === 'branch' ? t('branchTitle') : t('treeTitle');
+    document.getElementById('treeLede').textContent =
+      treeMode === 'branch' ? t('branchLede') : t('treeLede');
+    document.querySelectorAll('[data-tree-mode]').forEach(function (b) {
+      b.classList.toggle('is-on', b.dataset.treeMode === treeMode);
+      b.textContent = t(b.dataset.treeMode === 'branch' ? 'modeBranch' : 'modeGen');
+    });
+
+    if (treeMode === 'branch') renderBranch(host);
+    else renderGenList(host);
+
+    if (keep) window.scrollTo(0, y);
+  }
+
+  function renderGenList(host) {
     var groups = {};
     DATA.people.forEach(function (p) {
       var k = p.gen || 0;
@@ -399,7 +619,7 @@
       if (ai !== bi) return ai - bi;
       return (a.gen || 99) - (b.gen || 99);
     }).slice(0, 60).forEach(function (p) {
-      host.appendChild(personRow(p, withRel));
+      host.appendChild(personRow(p, withRel, true));
     });
   }
 
@@ -498,6 +718,19 @@
       sheetBody.appendChild(g);
     }
 
+    var jump = el('div', 'card-actions');
+    var toBranch = el('button', 'card-act', esc(t('showBranch')));
+    toBranch.type = 'button';
+    toBranch.addEventListener('click', function () { closeSheet(); setFocus(id); });
+    jump.appendChild(toBranch);
+    if (inChain(id)) {
+      var toTape = el('button', 'card-act', esc(t('inTape')));
+      toTape.type = 'button';
+      toTape.addEventListener('click', function () { closeSheet(); showInTape(id); });
+      jump.appendChild(toTape);
+    }
+    sheetBody.appendChild(jump);
+
     var actions = el('div', 'card-actions');
     if (id !== ego) {
       var b = el('button', 'card-act', esc(t('setMe')));
@@ -593,17 +826,23 @@
 
   /* Выбор себя должен быть виден. Иначе человек нажал — и, если он
      стоит наверху страницы, на экране будто ничего не произошло. */
-  function showMeInTape() {
-    if (view !== 'tape') { setView('tape'); }
-    var mine = tape.querySelector('.step.is-me');
-    if (!mine) return;
+  function showMeInTape() { showInTape(ego); }
+
+  function inChain(id) {
+    return CHAIN.some(function (p) { return p.id === id; });
+  }
+
+  function showInTape(id) {
+    if (view !== 'tape') setView('tape');
+    var step = tape.querySelector('.step[data-id="' + id + '"]');
+    if (!step) return;
     tape.querySelectorAll('.step').forEach(function (s) { s.classList.add('in'); });
-    var top = window.scrollY + mine.getBoundingClientRect().top -
+    var top = window.scrollY + step.getBoundingClientRect().top -
               window.innerHeight * 0.42;
     window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
-    mine.classList.remove('just-set');
-    void mine.offsetWidth;
-    mine.classList.add('just-set');
+    step.classList.remove('just-set');
+    void step.offsetWidth;
+    step.classList.add('just-set');
   }
 
   /* ── слои и системная «назад» ───────────────────────── */
@@ -774,6 +1013,16 @@
     onScroll();
   }
 
+  document.querySelectorAll('[data-tree-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (treeMode === b.dataset.treeMode) return;
+      treeMode = b.dataset.treeMode;
+      localStorage.setItem('az-tree-mode', treeMode);
+      window.scrollTo(0, 0);
+      renderTree();
+    });
+  });
+
   document.querySelectorAll('[data-lang-set]').forEach(function (b) {
     b.addEventListener('click', function () {
       if (lang === b.dataset.langSet) return;
@@ -795,6 +1044,12 @@
   });
 
   /* ── старт ──────────────────────────────────────────── */
+  /* При «назад» браузер сам возвращает прокрутку на прежнее место.
+     Слои — наша собственная история, и такое возвращение спорит
+     с переходами вроде «показать в линии»: прокруткой распоряжаемся
+     сами. */
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
   applyTheme();
   paint();
   window.addEventListener('scroll', onScroll, { passive: true });
