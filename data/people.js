@@ -60,6 +60,7 @@ window.AIDARZHAPAN = {
     {"id": "niyaz", "gen": 15, "name": "Нияз", "sex": "m", "line": "rod", "born": 1875, "parent": "kusep"},
     {"id": "kenzhebek-1880", "gen": 15, "name": "Кенжебек", "sex": "m", "line": "rod", "born": 1880, "parent": "kusep"},
     {"id": "qosbala", "gen": 16, "name": "Қосбала", "sex": "m", "line": "main", "born": 1896, "died": 1988, "parent": "dos"},
+    {"id": "qosmyrza", "gen": 16, "name": "Қосмырза", "sex": "m", "line": "rod", "born": 1896, "parent": "dos", "note": "Қосбаланың егізі, бала кезінде қайтыс болған. На Лист2 год записан как 1996 — описка, на Лист1 стоит 1896"},
     {"id": "zhangaqbai", "gen": 16, "name": "Жаңғақбай", "sex": "m", "line": "rod", "born": 1898, "parent": "niyaz"},
     {"id": "qiyaqbai", "gen": 16, "name": "Қияқбай", "sex": "m", "line": "rod", "born": 1900, "died": 1935, "parent": "dos"},
     {"id": "otemurat", "gen": 16, "name": "Өтемұрат", "sex": "m", "line": "rod", "born": 1905, "parent": "kenzhebek-1880"},
@@ -67,7 +68,6 @@ window.AIDARZHAPAN = {
     {"id": "nauryzbai", "gen": 16, "name": "Наурызбай", "sex": "m", "line": "rod", "born": 1918, "parent": "kenzhebek-1880"},
     {"id": "tuimesh", "gen": 16, "name": "Тұймеш", "sex": "f", "line": "out", "born": 1920, "died": 1928, "parent": "dos"},
     {"id": "olzhabai", "gen": 16, "name": "Олжабай", "sex": "m", "line": "rod", "born": 1927, "died": 1991, "parent": "dos"},
-    {"id": "qosmyrza", "gen": 16, "name": "Қосмырза", "sex": "m", "line": "rod", "born": 1996, "parent": "dos", "note": "бала кезінде қайтыс болған"},
     {"id": "qarazhan", "gen": 17, "name": "Қаражан", "sex": null, "line": "rod", "parent": "turme"},
     {"id": "matzhan", "gen": 17, "name": "Мәтжан", "sex": "m", "line": "rod", "born": 1923, "parent": "zhangaqbai", "note": "3 жасында қызылша ауруынан қайтыс болған"},
     {"id": "er-bala", "gen": 17, "name": "Ер бала", "sex": "m", "line": "rod", "born": 1930, "parent": "qiyaqbai", "note": "аты -? Қазан қ"},
@@ -158,6 +158,6 @@ window.AIDARZHAPAN = {
     {"partners": ["qosbala", "amina-qosbala"]},
     {"partners": ["munal", "maqpal"]},
     {"partners": ["munal", "toqbike"]},
-    {"partners": ["orynbasar", "sabilash"], "src": "предположение: Алпамыс подписал её «шешеміз» — подтвердить"}
+    {"partners": ["orynbasar", "sabilash"]}
   ]
 };
