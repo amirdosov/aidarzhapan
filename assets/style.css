@@ -643,13 +643,16 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 body.locked .toast{top:auto; bottom:92px; transform:translate(-50%,14px)}
 body.locked .toast.is-on{transform:translate(-50%,0)}
 
-/* ── ветка: кто от кого ─────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   Ветка: кто от кого. Схема и список — те же, что на сайте
+   близкой семьи: родня уже привыкла к этому виду, и незачем
+   заставлять её привыкать заново.
+   ══════════════════════════════════════════════════════════ */
 .tree-seg{display:inline-flex; margin-top:12px}
 
-/* Путь от Адая до того, кого смотрим. Каждое имя нажимается —
-   так ветка листается вверх. */
+/* Дорожка вверх: путь от Адая до того, кого смотрим. */
 .crumbs{
-  max-width:760px; margin:0 auto; padding:6px 12px 2px;
+  max-width:1120px; margin:0 auto; padding:6px 14px 2px;
   display:flex; flex-wrap:wrap; align-items:center; gap:2px 0;
 }
 .crumb{
@@ -659,57 +662,227 @@ body.locked .toast.is-on{transform:translate(-50%,0)}
 }
 .crumb:hover{color:var(--gold)}
 .crumb + .crumb::before{content:'›'; margin-right:8px; color:var(--line)}
-
-.branch-head{max-width:760px; margin:0 auto; padding:0 12px 4px}
-.branch-head .row{
-  border-bottom:0; border-radius:16px;
-  border:1px solid var(--line);
-  background:linear-gradient(180deg,
-    color-mix(in srgb, var(--gold) 10%, transparent), transparent 78%);
-  padding:12px 12px;
-}
-.branch-head .row-name{font-size:19px; font-family:var(--f-display); color:var(--gold-soft)}
-
-.node{position:relative; display:flex; align-items:center; gap:6px;
-      padding-left:calc(var(--d) * 16px)}
-/* Тонкая направляющая слева: без неё на глубине не видно,
-   где кончается один выводок и начинается соседний. */
-.node.is-deep::before{
-  content:''; position:absolute; top:0; bottom:0;
-  left:calc(var(--d) * 16px - 9px); width:1px; background:var(--line-soft);
-}
-.node .row{padding-left:2px}
-.node .row-av{width:32px; height:32px; font-size:15px}
-.node .row-name{font-size:14.5px}
-
-/* Кружок с числом детей — он же кнопка «раскрыть». Число само
-   по себе говорит, велик ли выводок. */
-.tw{
-  flex:none; width:26px; height:26px; border-radius:999px;
-  appearance:none; cursor:pointer;
-  border:1px solid var(--line-soft); background:transparent;
-  color:var(--gold-dim); font-family:var(--f-body); font-size:11px; font-weight:600;
-  display:grid; place-items:center;
-  transition:border-color .25s var(--ease), color .25s var(--ease),
-             background .25s var(--ease);
-}
-.tw:hover{border-color:var(--gold); color:var(--gold)}
-.tw.is-open{background:var(--gold); border-color:var(--gold); color:var(--bg)}
-[data-theme="light"] .tw.is-open{color:#FFFDF8}
-.tw.is-leaf{
-  border:0; width:26px; height:26px; cursor:default;
-  background:radial-gradient(circle at 50% 50%,
-    var(--line) 0 2px, transparent 2.5px);
-}
-
-.more{
-  appearance:none; cursor:pointer; display:block;
-  margin:2px 0 6px; margin-left:calc(var(--d) * 16px + 32px);
-  border:1px dashed var(--line-soft); border-radius:999px;
-  background:transparent; color:var(--muted);
-  font-family:var(--f-body); font-size:11.5px; letter-spacing:.06em;
-  padding:6px 14px;
-  transition:border-color .25s var(--ease), color .25s var(--ease);
-}
-.more:hover{border-color:var(--gold); color:var(--gold)}
 .crumb.is-dots{color:var(--gold-dim); letter-spacing:.1em}
+.crumb.is-here{color:var(--gold-soft); cursor:default; font-weight:600}
+
+/* ── сцена ──────────────────────────────────────────────── */
+.stage{
+  position:relative; max-width:1120px; margin:8px auto 0;
+  border:1px solid var(--line-soft); border-radius:22px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 55%, transparent), transparent 70%),
+    color-mix(in srgb, var(--panel) 22%, transparent);
+  overflow:hidden;
+}
+.stage::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size:34px 34px; opacity:.5;
+  mask-image:radial-gradient(70% 60% at 50% 40%, #000 0%, transparent 78%);
+  -webkit-mask-image:radial-gradient(70% 60% at 50% 40%, #000 0%, transparent 78%);
+}
+.stage-tools{
+  position:absolute; z-index:6; right:12px; top:12px;
+  display:flex; gap:6px; align-items:center;
+}
+.zoom-tools{display:flex; gap:6px; align-items:center}
+.stage[data-mode="list"] .viewport{display:none}
+.stage[data-mode="list"] .zoom-tools{display:none}
+.stage[data-mode="tree"] .outline{display:none}
+/* Свернуть всё разом — только в списке: на схеме «развернуть всё»
+   от Адая выложило бы 139 карточек в одну нечитаемую стену. */
+.stage[data-mode="tree"] .list-tools{display:none}
+
+.viewport{
+  position:relative; z-index:2;
+  overflow:auto; padding:44px 20px 34px;
+  min-height:320px; cursor:grab;
+  scrollbar-width:thin; -webkit-overflow-scrolling:touch;
+}
+.viewport.dragging{cursor:grabbing; user-select:none}
+.viewport::-webkit-scrollbar{height:8px; width:8px}
+.viewport::-webkit-scrollbar-thumb{background:var(--line); border-radius:99px}
+
+/* .canvas — layout-коробка (масштабированный размер ставит JS),
+   .zoomer — содержимое, масштабируется только он */
+.canvas{position:relative; margin:0 auto;
+        transition:width .45s var(--ease), height .45s var(--ease)}
+.zoomer{position:relative; width:max-content; transform-origin:top left;
+        transition:transform .45s var(--ease)}
+.links{position:absolute; inset:0; width:100%; height:100%;
+       overflow:visible; pointer-events:none; z-index:1}
+.links path{
+  fill:none; stroke:var(--gold); stroke-width:1.4; stroke-linecap:round;
+  opacity:.55; vector-effect:non-scaling-stroke;
+}
+.tree{position:relative; z-index:2; display:flex; justify-content:center}
+
+/* ── узлы схемы ─────────────────────────────────────────── */
+.node{display:flex; flex-direction:column; align-items:center}
+.couple{display:flex; align-items:center; gap:12px}
+.knot{
+  width:26px; height:26px; flex:none;
+  display:grid; place-items:center; color:var(--gold); opacity:.85;
+}
+.knot svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.3}
+.knot svg .k{animation:knotPulse 3.6s var(--ease) infinite}
+@keyframes knotPulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+.kids{display:flex; align-items:flex-start; justify-content:center;
+      gap:26px; padding-top:74px}
+
+/* Кнопка на линии: свёрнуто — «+7», раскрыто — «−». */
+.fold{
+  position:relative; z-index:3; margin-top:10px;
+  appearance:none; cursor:pointer; min-width:30px; height:24px;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--panel); color:var(--gold);
+  font-family:var(--f-body); font-size:11px; font-weight:700; line-height:1;
+  padding:0 8px;
+  transition:border-color .25s var(--ease), background .25s var(--ease),
+             color .25s var(--ease);
+}
+.fold:hover{border-color:var(--gold); background:var(--gold); color:var(--bg)}
+[data-theme="light"] .fold:hover{color:#FFFDF8}
+
+.person{
+  appearance:none; cursor:pointer; text-align:center;
+  width:132px; padding:16px 10px 14px;
+  border:1px solid var(--line-soft); border-radius:18px;
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  color:inherit; font-family:var(--f-body);
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition:transform .4s var(--spring), border-color .35s var(--ease),
+             box-shadow .35s var(--ease);
+}
+.person:hover{transform:translateY(-5px); border-color:var(--gold);
+              box-shadow:0 16px 34px rgba(0,0,0,.28)}
+.person.is-me{border-color:var(--gold);
+              box-shadow:0 0 0 1px var(--gold), 0 18px 38px rgba(0,0,0,.3)}
+.p-name{font-size:14px; font-weight:600; line-height:1.25}
+.p-role{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+        color:var(--gold); opacity:.85; line-height:1.3}
+.p-year{font-size:11.5px; color:var(--muted)}
+
+/* ── аватар: буква, поверх фото, снизу знак пола ────────── */
+.avatar{
+  position:relative; width:56px; height:56px; flex:none; border-radius:50%;
+  display:grid; place-items:center;
+  font-family:var(--f-display); font-size:24px; line-height:1;
+  color:var(--gold-soft);
+  background:radial-gradient(circle at 32% 28%,
+      color-mix(in srgb, var(--gold) 26%, transparent), transparent 70%),
+    color-mix(in srgb, var(--panel-2) 90%, var(--gold));
+  border:1px solid var(--line);
+}
+.avatar .ini{display:block; line-height:1}
+.avatar .ph{
+  position:absolute; inset:0; z-index:1;
+  width:100%; height:100%; border-radius:50%;
+  object-fit:cover; object-position:center 22%;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
+}
+.avatar .sex{z-index:2}
+.sex{
+  position:absolute; right:-4px; bottom:-4px;
+  width:20px; height:20px; border-radius:50%;
+  display:grid; place-items:center;
+  background:var(--panel); border:1px solid var(--line);
+}
+.sex svg{width:11px; height:11px; fill:none; stroke:var(--gold);
+         stroke-width:1.7; stroke-linecap:round}
+[data-sex="f"] .sex svg{stroke:#E2A2B4}
+[data-theme="light"] [data-sex="f"] .sex svg{stroke:#B4566E}
+[data-sex="u"] .sex svg{stroke:var(--muted)}
+
+/* ── тізім: то же дерево вертикально ────────────────────── */
+.outline{
+  position:relative; z-index:2;
+  padding:52px 14px 26px; text-align:left;
+  max-height:min(76svh, 720px); overflow:auto; scrollbar-width:thin;
+}
+.outline::-webkit-scrollbar{width:8px}
+.outline::-webkit-scrollbar-thumb{background:var(--line); border-radius:99px}
+
+.ol-root,.ol-kids{list-style:none; margin:0; padding:0}
+.ol-kids{
+  position:relative; margin-left:15px; padding-left:17px;
+  border-left:1px solid var(--line-soft);
+}
+.ol-i.is-folded > .ol-kids{display:none}
+.ol-row{display:flex; align-items:center; gap:6px; padding:3px 0}
+.ol-kids > .ol-i > .ol-row::before{
+  content:""; position:absolute; left:0; width:13px; height:1px;
+  background:var(--line-soft); translate:-17px 0;
+}
+
+.ol-tw{
+  appearance:none; cursor:pointer; flex:none;
+  width:22px; height:22px; border-radius:50%;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb, var(--panel) 70%, transparent);
+  color:var(--gold); font-family:var(--f-body);
+  font-size:10px; font-weight:700; line-height:1;
+  display:grid; place-items:center;
+  transition:transform .3s var(--spring), border-color .3s var(--ease);
+}
+.ol-tw::after{
+  content:""; width:6px; height:6px;
+  border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+  rotate:45deg; translate:0 -2px;
+}
+.ol-i.is-folded > .ol-row > .ol-tw::after{display:none}
+.ol-tw:hover{border-color:var(--gold); transform:scale(1.1)}
+.ol-tw.is-leaf{border:0; background:transparent; cursor:default; pointer-events:none}
+.ol-tw.is-leaf::after{
+  content:""; width:5px; height:5px; border:0; rotate:0deg; translate:0 0;
+  border-radius:50%; background:var(--line);
+}
+
+/* супруги стоят рядом: чипы по содержимому, а не во всю ширину */
+.ol-couple{display:flex; align-items:center; gap:2px; min-width:0; flex:1;
+           justify-content:flex-start; flex-wrap:wrap}
+.ol-knot{flex:none; width:20px; height:20px; display:grid; place-items:center;
+         color:var(--gold); opacity:.7}
+.ol-knot svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.4}
+
+.ol-p{
+  appearance:none; cursor:pointer; font-family:var(--f-body); color:inherit;
+  display:flex; align-items:center; gap:9px; min-width:0; flex:0 1 auto;
+  padding:7px 10px 7px 7px; border-radius:14px;
+  border:1px solid transparent; background:transparent; text-align:left;
+  transition:background .3s var(--ease), border-color .3s var(--ease),
+             transform .3s var(--spring);
+}
+.ol-p:hover{
+  background:color-mix(in srgb, var(--panel) 80%, transparent);
+  border-color:var(--line-soft); transform:translateX(2px);
+}
+.ol-p.is-me{background:color-mix(in srgb, var(--gold) 12%, transparent);
+            border-color:var(--gold)}
+.ol-p .avatar{width:36px; height:36px; font-size:16px}
+.ol-p .avatar .sex{width:15px; height:15px; right:-3px; bottom:-3px}
+.ol-p .avatar .sex svg{width:9px; height:9px}
+
+.ol-txt{display:flex; flex-direction:column; gap:1px; min-width:0}
+.ol-name{font-size:14px; font-weight:600; line-height:1.25;
+         white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ol-meta{font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+         color:var(--muted); white-space:nowrap; overflow:hidden;
+         text-overflow:ellipsis}
+
+@media (max-width:640px){
+  .stage{border-radius:16px; margin-left:8px; margin-right:8px}
+  .outline{padding:52px 8px 22px; max-height:none; overflow:visible}
+  .ol-kids{margin-left:11px; padding-left:13px}
+  .ol-kids > .ol-i > .ol-row::before{width:9px; translate:-13px 0}
+  .ol-p{padding:6px 8px 6px 6px; gap:7px}
+  .ol-p .avatar{width:32px; height:32px; font-size:14px}
+  .ol-couple{gap:3px}
+  .ol-knot{width:16px; height:16px}
+  .ol-knot svg{width:15px; height:15px}
+  .viewport{padding:44px 12px 28px}
+}

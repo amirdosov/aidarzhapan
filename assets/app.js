@@ -125,12 +125,14 @@
                  ru: '{n}, это ваше шежіре' },
     copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
 
-    modeBranch:  { kk: 'Тармақ', ru: 'Ветка' },
+    modeTree:    { kk: 'Сызба', ru: 'Схема' },
+    modeList:    { kk: 'Тізім', ru: 'Список' },
     modeGen:     { kk: 'Ұрпақ', ru: 'Колена' },
     branchTitle: { kk: 'Кімнен кім тарайды', ru: 'Кто от кого' },
-    branchLede:  { kk: 'Санды бассаңыз — балалары ашылады. Есімді бассаңыз — сол кісі',
-                   ru: 'Нажмите на число — раскроются дети. На имя — карточка' },
-    more:        { kk: 'Тағы {n}', ru: 'Ещё {n}' },
+    treeHintTree:{ kk: 'Сүйреп жылжытыңыз, жақындатыңыз · есімді бассаңыз — сол кісі',
+                   ru: 'Тяните и приближайте · нажмите на имя — карточка' },
+    treeHintList:{ kk: 'Тармақты ашу үшін санды басыңыз · есімді бассаңыз — сол кісі',
+                   ru: 'Нажмите на число — раскроется ветка · на имя — карточка' },
     noKids:      { kk: 'Балалары жазылмаған', ru: 'Дети не записаны' },
     kidsOf:      { kk: '{n} бала', ru: 'детей: {n}' },
     orphanHead:  { kk: 'Ата-анасы жазылмағандар', ru: 'Родитель не записан' },
@@ -420,15 +422,26 @@
   /* ── ветка: кто от кого ─────────────────────────────
      Список по коленам показывает, кто в каком поколении, но
      одиннадцать сыновей Қосана идут в нём одиннадцатью строками
-     подряд без всякой связи между собой. Здесь наоборот: сверху
-     путь от Адая до выбранного, ниже — его потомки с отступами.
-     Оба взгляда нужны, поэтому переключатель, а не замена. */
-  var treeMode = localStorage.getItem('az-tree-mode') || 'branch';
+     подряд без всякой связи между собой.
+
+     Показываем родство так же, как на сайте близкой семьи, чтобы
+     родне не пришлось привыкать заново:
+       сызба — карточки и линии, тянется пальцем и приближается;
+       тізім — то же дерево вертикально, ветки сворачиваются;
+       ұрпақ — прежний список всех 139 по коленам.
+
+     Схема на весь род нечитаема — это проверено ещё на прототипе,
+     поэтому и схема, и список растут не от Адая, а от выбранного
+     человека. Вверх ведёт дорожка над сценой. */
+  /* На узком экране схема нечитаема, поэтому по умолчанию список.
+     Старое значение из прежней версии сайта не подходит — проверяем. */
+  var treeMode = localStorage.getItem('az-tree-mode');
+  if (['tree', 'list', 'gen'].indexOf(treeMode) < 0) {
+    treeMode = window.innerWidth < 760 ? 'list' : 'tree';
+  }
   var focusId  = null;
-  var OPEN = {};
-  var MORE = {};
+  var FOLD = {};            /* свёрнутые ветки: id → true/false */
   var crumbsAll = false;
-  var SHOW_FIRST = 4;
 
   var ROOT = (DATA.people[0] || {}).id;
   var ORPHANS = DATA.people.filter(function (p) {
@@ -438,6 +451,19 @@
      свой род. Пробел — это когда неизвестно вообще ничего. */
   var INLAWS = ORPHANS.filter(function (id) { return (KIN.mates[id] || []).length; });
   var LOST   = ORPHANS.filter(function (id) { return !(KIN.mates[id] || []).length; });
+
+  var SEX_SVG = {
+    m: '<svg viewBox="0 0 12 12"><circle cx="4.6" cy="7.4" r="3.1"/>' +
+       '<path d="M7.1 4.9 10.4 1.6M8.1 1.6h2.5v2.5"/></svg>',
+    f: '<svg viewBox="0 0 12 12"><circle cx="6" cy="4.4" r="3.1"/>' +
+       '<path d="M6 7.5v3.5M4.4 9.5h3.2"/></svg>',
+    u: '<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="3.1"/></svg>'
+  };
+  /* Два кольца — пара. Знак тот же, что на сайте близкой семьи. */
+  var KNOT_SVG =
+    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle class="k" cx="9" cy="12" r="5.4"/>' +
+    '<circle class="k" cx="15" cy="12" r="5.4"/></svg>';
 
   /* Шежіре открывают ради живых, поэтому по умолчанию встаём не
      на Адая, а на отца выбранного: вокруг сразу свои. */
@@ -463,94 +489,433 @@
   function setFocus(id) {
     if (!BY[id]) return;
     focusId = id;
-    OPEN = {}; MORE = {}; crumbsAll = false;
-    treeMode = 'branch';
+    FOLD = {}; crumbsAll = false;
+    if (treeMode === 'gen') treeMode = 'list';
     localStorage.setItem('az-tree-mode', treeMode);
     if (view !== 'tree') setView('tree');
     else { window.scrollTo(0, 0); renderTree(); }
   }
 
-  function branchNode(id, depth) {
-    var node = el('div', 'node' + (depth ? ' is-deep' : ''));
-    node.style.setProperty('--d', Math.min(depth, 5));
+  function matesOf(id) {
+    return (KIN.mates[id] || []).map(function (m) { return m.id; })
+      .filter(function (x) { return BY[x]; });
+  }
+  function kidsOf(id) { return CHILDREN[id] || []; }
+  /* Сколько ступеней открыто сразу. В списке две — он дешёвый
+     и листается. На схеме одна: два колена сыновей с жёнами дают
+     под три тысячи пикселей ширины, и всё сжимается до нечитаемого. */
+  function openDepth() { return treeMode === 'tree' ? 1 : 2; }
+  function folded(id, depth) {
+    return FOLD[id] === undefined ? depth >= openDepth() : FOLD[id];
+  }
+  /* Строка под именем: кем этот человек приходится выбранному. */
+  function roleLine(p) {
+    if (!ego) return '';
+    if (p.id === ego) return t('me');
+    var r = relOf(p.id);
+    return (r && r.term) ? relText(r) : '';
+  }
 
-    var kids = CHILDREN[id] || [];
-    if (kids.length) {
-      var tw = el('button', 'tw' + (OPEN[id] ? ' is-open' : ''), String(kids.length));
-      tw.type = 'button';
-      tw.setAttribute('aria-label', t('kidsOf', { n: kids.length }));
-      tw.addEventListener('click', function () {
-        OPEN[id] = !OPEN[id];
-        renderTree(true);
-      });
-      node.appendChild(tw);
-    } else {
-      node.appendChild(el('span', 'tw is-leaf'));
-    }
+  /* Аватар: всегда буква, фото ложится сверху. Не нашлось файла —
+     картинка убирает себя, буква снова видна. Значок пола внизу
+     справа: фотографий всего две на 139, без него кружки пустые. */
+  function avatarHTML(p) {
+    var face = (PHOTOS[p.id] || [])[0];
+    face = face && (face.thumb || face.src);
+    return '<span class="avatar">' +
+      '<span class="ini">' + esc(p.name.charAt(0)) + '</span>' +
+      (face ? '<img class="ph" alt="" loading="lazy" src="' + esc(face) + '">' : '') +
+      '<span class="sex">' + (SEX_SVG[p.sex] || SEX_SVG.u) + '</span>' +
+    '</span>';
+  }
+  function guardPhotos(root) {
+    root.querySelectorAll('img.ph').forEach(function (img) {
+      img.addEventListener('error', function () { img.remove(); });
+    });
+  }
 
-    node.appendChild(personRow(BY[id], true));
+  /* ── сызба: карточки и линии ────────────────────────── */
+  var stageEl  = document.getElementById('stage');
+  var treeRoot = document.getElementById('treeRoot');
+  var outline  = document.getElementById('outline');
+  var seq = 0;
+
+  function personCard(p) {
+    var b = el('button', 'person' + (p.id === ego ? ' is-me' : ''));
+    b.type = 'button';
+    b.dataset.person = p.id;
+    b.dataset.sex = p.sex || 'u';
+    b.style.setProperty('--i', seq++);
+    var role = roleLine(p), y = years(p);
+    b.innerHTML = avatarHTML(p) +
+      '<span class="p-name">' + esc(p.name) + '</span>' +
+      (role ? '<span class="p-role">' + esc(role) + '</span>' : '') +
+      (y ? '<span class="p-year">' + esc(y) + '</span>' : '');
+    guardPhotos(b);
+    b.addEventListener('click', function () { openPerson(p.id); });
+    return b;
+  }
+
+  function coupleEl(id) {
+    var box = el('div', 'couple');
+    box.appendChild(personCard(BY[id]));
+    matesOf(id).forEach(function (mid) {
+      box.appendChild(el('div', 'knot', KNOT_SVG));
+      box.appendChild(personCard(BY[mid]));
+    });
+    return box;
+  }
+
+  /* Кнопка на линии: свёрнуто — «+7», раскрыто — «−». */
+  function foldBtn(id, depth, n) {
+    var off = folded(id, depth);
+    var b = el('button', 'fold' + (off ? ' is-off' : ''), off ? '+' + n : '−');
+    b.type = 'button';
+    b.setAttribute('aria-label', t('kidsOf', { n: n }));
+    b.addEventListener('click', function () { FOLD[id] = !off; renderTree(true); });
+    return b;
+  }
+
+  function buildNode(id, depth, seen) {
+    var node = el('div', 'node');
+    node.dataset.person = id;
+    node.appendChild(coupleEl(id));
+
+    var kids = kidsOf(id).filter(function (k) { return !seen[k]; });
+    if (!kids.length) return node;
+
+    node.appendChild(foldBtn(id, depth, kids.length));
+    if (folded(id, depth)) return node;
+
+    var box = el('div', 'kids');
+    kids.forEach(function (kid) {
+      seen[kid] = 1;
+      box.appendChild(buildNode(kid, depth + 1, seen));
+    });
+    node.appendChild(box);
     return node;
   }
 
-  /* У Қосана одиннадцать детей, у Келімберді восемь: показываем
-     четверых, остальных — по нажатию, чтобы ветка не расползалась. */
-  function branchLevel(id, depth, host) {
-    var kids = CHILDREN[id] || [];
-    var shown = (MORE[id] || kids.length <= SHOW_FIRST + 1)
-      ? kids : kids.slice(0, SHOW_FIRST);
-    shown.forEach(function (kid) {
-      host.appendChild(branchNode(kid, depth));
-      if (OPEN[kid]) branchLevel(kid, depth + 1, host);
-    });
-    if (shown.length < kids.length) {
-      var b = el('button', 'more', esc(t('more', { n: kids.length - shown.length })));
-      b.type = 'button';
-      b.style.setProperty('--d', Math.min(depth, 5));
-      b.addEventListener('click', function () { MORE[id] = true; renderTree(true); });
-      host.appendChild(b);
-    }
+  function renderStage() {
+    seq = 0;
+    treeRoot.innerHTML = '';
+    var seen = {};
+    seen[focusPerson()] = 1;
+    treeRoot.appendChild(buildNode(focusPerson(), 0, seen));
+    lastFitW = -1;
+    fitZoom();
+    drawLinks();
+    /* Шрифты догружаются и меняют ширину карточек — пересчитываем
+       ещё раз, когда всё улеглось. */
+    setTimeout(function () {
+      if (treeMode === 'tree' && view === 'tree') maybeFit(true);
+    }, 320);
   }
 
-  function renderBranch(host) {
-    var id = focusPerson();
+  /* ── линии между карточками ─────────────────────────── */
+  var svg    = document.getElementById('links');
+  var canvas = document.getElementById('canvas');
+  var zoomer = document.getElementById('zoomer');
+
+  /* Координаты берём из layout, а не из getBoundingClientRect:
+     zoomer масштабируется, и rect соврал бы. */
+  function box(elm) {
+    var x = 0, y = 0, n = elm;
+    while (n && n !== zoomer) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    return { cx: x + elm.offsetWidth / 2, top: y, bottom: y + elm.offsetHeight };
+  }
+
+  function drawLinks() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    treeRoot.querySelectorAll('.node').forEach(function (node) {
+      var couple = node.querySelector(':scope > .couple');
+      var kids   = node.querySelector(':scope > .kids');
+      if (!couple || !kids) return;
+      var from = box(couple);
+      Array.prototype.forEach.call(kids.children, function (sub) {
+        var lead = sub.querySelector('.person');
+        if (!lead) return;
+        var to  = box(lead);
+        var y0  = from.bottom;
+        var y1  = to.top;
+        var mid = y0 + (y1 - y0) * 0.52;
+        var dx  = to.cx - from.cx;
+        var r   = Math.min(16, Math.abs(dx) / 2, Math.abs(y1 - y0) / 3);
+        var d;
+        if (Math.abs(dx) < 2) {
+          d = 'M' + from.cx + ' ' + y0 + 'V' + y1;
+        } else {
+          var sgn = dx > 0 ? 1 : -1;
+          d = 'M' + from.cx + ' ' + y0 +
+              'V' + (mid - r) +
+              'Q' + from.cx + ' ' + mid + ' ' + (from.cx + sgn * r) + ' ' + mid +
+              'H' + (to.cx - sgn * r) +
+              'Q' + to.cx + ' ' + mid + ' ' + to.cx + ' ' + (mid + r) +
+              'V' + y1;
+        }
+        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        svg.appendChild(path);
+      });
+    });
+  }
+
+  /* ── приближение и перетаскивание ───────────────────── */
+  var STEPS = [0.35, 0.45, 0.55, 0.7, 0.85, 1];
+  var MIN_FIT = 0.35;
+  var zoom = 1;
+  var viewport = document.getElementById('viewport');
+  var zoomLabel = document.getElementById('zoomLabel');
+  var lastFitW = -1, fitTimer;
+
+  /* scale() не меняет layout-коробку, поэтому масштабированный
+     размер выставляем внешнему .canvas сами — иначе останется
+     пустое место и лишняя прокрутка. */
+  function syncCanvasBox() {
+    canvas.style.width  = Math.round(zoomer.offsetWidth  * zoom) + 'px';
+    canvas.style.height = Math.round(zoomer.offsetHeight * zoom) + 'px';
+  }
+  function setScale() {
+    zoomer.style.transform = 'scale(' + zoom + ')';
+    zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    syncCanvasBox();
+    centerScroll();
+  }
+  function setZoom(z) {
+    zoom = Math.max(STEPS[0], Math.min(STEPS[STEPS.length - 1], z));
+    setScale();
+    setTimeout(drawLinks, 460);
+  }
+  function centerScroll() {
+    [0, 120, 420].forEach(function (ms) {
+      setTimeout(function () {
+        var maxX = viewport.scrollWidth - viewport.clientWidth;
+        if (maxX > 2) viewport.scrollLeft = maxX / 2;
+      }, ms);
+    });
+  }
+  function stageCap() {
+    var narrow = window.innerWidth < 641;
+    return Math.round(Math.max(280,
+      Math.min(window.innerHeight * (narrow ? 0.66 : 0.76), 700)));
+  }
+  /* Влезает по ширине и по высоте, но мельче MIN_FIT не уходим:
+     дальше имена уже не прочитать, лучше тянуть пальцем. */
+  function fitZoom() {
+    var cap = stageCap();
+    viewport.style.maxHeight = cap + 'px';
+    var cs = getComputedStyle(viewport);
+    var padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    var padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    var haveW = viewport.clientWidth - padX - 2;
+    var haveH = cap - padY - 2;
+    var z = Math.min(1, haveW / zoomer.offsetWidth, haveH / zoomer.offsetHeight);
+    zoom = Math.round(Math.max(MIN_FIT, z) * 100) / 100;
+    setScale();
+  }
+  function maybeFit(force) {
+    var w = viewport.clientWidth;
+    if (!force && Math.abs(w - lastFitW) < 4) return;
+    lastFitW = w;
+    fitZoom();
+    drawLinks();
+  }
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      if (treeMode !== 'tree' || view !== 'tree') return;
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(function () { maybeFit(false); }, 90);
+    }).observe(viewport);
+  }
+  document.querySelectorAll('[data-zoom]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var dir = parseInt(b.dataset.zoom, 10);
+      if (dir === 0) { maybeFit(true); return; }
+      var i = 0, best = 1e9;
+      STEPS.forEach(function (s, k) {
+        var d = Math.abs(s - zoom);
+        if (d < best) { best = d; i = k; }
+      });
+      setZoom(STEPS[Math.max(0, Math.min(STEPS.length - 1, i + dir))]);
+    });
+  });
+
+  (function pan() {
+    var down = false, sx = 0, sy = 0, sl = 0, st = 0;
+    viewport.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('.person') || e.target.closest('.fold') ||
+          e.target.closest('.stage-tools')) return;
+      down = true;
+      sx = e.clientX; sy = e.clientY;
+      sl = viewport.scrollLeft; st = viewport.scrollTop;
+      viewport.classList.add('dragging');
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      viewport.scrollLeft = sl - (e.clientX - sx);
+      viewport.scrollTop  = st - (e.clientY - sy);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+      viewport.addEventListener(ev, function () {
+        down = false;
+        viewport.classList.remove('dragging');
+      });
+    });
+  })();
+
+  /* ── тізім: то же дерево вертикально ────────────────── */
+  function olChip(p) {
+    var b = el('button', 'ol-p' + (p.id === ego ? ' is-me' : ''));
+    b.type = 'button';
+    b.dataset.person = p.id;
+    b.dataset.sex = p.sex || 'u';
+    var meta = [];
+    var y = years(p); if (y) meta.push(y);
+    var role = roleLine(p); if (role) meta.push(role);
+    b.innerHTML = avatarHTML(p) +
+      '<span class="ol-txt">' +
+        '<span class="ol-name">' + esc(p.name) + '</span>' +
+        '<span class="ol-meta">' + esc(meta.join(' · ')) + '</span>' +
+      '</span>';
+    guardPhotos(b);
+    b.addEventListener('click', function () { openPerson(p.id); });
+    return b;
+  }
+
+  function olNode(id, depth, seen) {
+    var li = el('li', 'ol-i');
+    var row = el('div', 'ol-row');
+    var tw = el('button', 'ol-tw');
+    tw.type = 'button';
+    row.appendChild(tw);
+
+    var couple = el('div', 'ol-couple');
+    couple.appendChild(olChip(BY[id]));
+    matesOf(id).forEach(function (mid) {
+      couple.appendChild(el('span', 'ol-knot', KNOT_SVG));
+      couple.appendChild(olChip(BY[mid]));
+    });
+    row.appendChild(couple);
+    li.appendChild(row);
+
+    var kids = kidsOf(id).filter(function (k) { return !seen[k]; });
+    if (!kids.length) {
+      tw.className = 'ol-tw is-leaf';
+      return li;
+    }
+
+    var off = folded(id, depth);
+    li.classList.toggle('is-folded', off);
+    tw.dataset.count = kids.length;
+    tw.textContent = off ? String(kids.length) : '';
+    tw.setAttribute('aria-label', t('kidsOf', { n: kids.length }));
+    tw.addEventListener('click', function () { FOLD[id] = !off; renderTree(true); });
+
+    /* Свёрнутую ветку не строим вовсе: у Адая под ней все 139. */
+    if (!off) {
+      var ul = el('ul', 'ol-kids');
+      kids.forEach(function (kid) {
+        seen[kid] = 1;
+        ul.appendChild(olNode(kid, depth + 1, seen));
+      });
+      li.appendChild(ul);
+    }
+    return li;
+  }
+
+  function renderOutline() {
+    outline.innerHTML = '';
+    var ul = el('ul', 'ol-root');
+    var seen = {};
+    seen[focusPerson()] = 1;
+    ul.appendChild(olNode(focusPerson(), 0, seen));
+    outline.appendChild(ul);
+  }
+
+  /* Свернуть или развернуть всё сразу — иначе до дальней ветки
+     добираешься десятком нажатий. */
+  document.getElementById('foldBtn').addEventListener('click', function () {
+    /* Сам корень открыт всегда — иначе кнопка залипала бы
+       на «свернуть». Смотрим только на ветки под ним. */
+    var anyOpen = false;
+    (function walk(id, depth, seen) {
+      var kids = kidsOf(id).filter(function (k) { return !seen[k]; });
+      if (!kids.length) return;
+      if (depth > 0 && !folded(id, depth)) anyOpen = true;
+      kids.forEach(function (k) { seen[k] = 1; walk(k, depth + 1, seen); });
+    })(focusPerson(), 0, {});
+
+    var mark = {};
+    (function walk(id, seen) {
+      var kids = kidsOf(id).filter(function (k) { return !seen[k]; });
+      if (!kids.length) return;
+      mark[id] = anyOpen;
+      kids.forEach(function (k) { seen[k] = 1; walk(k, seen); });
+    })(focusPerson(), {});
+    FOLD = mark;
+    FOLD[focusPerson()] = false;                /* корень оставляем открытым */
+    renderTree(true);
+  });
+
+  /* ── дорожка вверх ──────────────────────────────────── */
+  function renderCrumbs() {
+    var host = document.getElementById('crumbs');
+    host.innerHTML = '';
+    if (treeMode === 'gen') { host.hidden = true; return; }
+    host.hidden = false;
 
     /* Путь от Адая — двадцать имён, на телефоне это четыре строки
        над самой веткой. Показываем начало и двух последних,
        остальные — по нажатию на многоточие. */
-    var line = ancestryOf(id);
-    if (line.length) {
-      var crumbs = el('div', 'crumbs');
-      var show = (!crumbsAll && line.length > 4)
-        ? [line[0], null].concat(line.slice(-2)) : line;
-      show.forEach(function (a) {
-        if (!a) {
-          var dots = el('button', 'crumb is-dots', '…');
-          dots.type = 'button';
-          dots.title = String(line.length);
-          dots.addEventListener('click', function () {
-            crumbsAll = true; renderTree(true);
-          });
-          crumbs.appendChild(dots);
-          return;
-        }
-        var c = el('button', 'crumb', esc(a.name));
-        c.type = 'button';
-        c.addEventListener('click', function () { setFocus(a.id); });
-        crumbs.appendChild(c);
-      });
-      host.appendChild(crumbs);
-    }
+    var line = ancestryOf(focusPerson());
+    var show = (!crumbsAll && line.length > 4)
+      ? [line[0], null].concat(line.slice(-2)) : line;
+    show.forEach(function (a) {
+      if (!a) {
+        var dots = el('button', 'crumb is-dots', '…');
+        dots.type = 'button';
+        dots.addEventListener('click', function () { crumbsAll = true; renderTree(true); });
+        host.appendChild(dots);
+        return;
+      }
+      var c = el('button', 'crumb', esc(a.name));
+      c.type = 'button';
+      c.addEventListener('click', function () { setFocus(a.id); });
+      host.appendChild(c);
+    });
+    var here = el('span', 'crumb is-here', esc(BY[focusPerson()].name));
+    host.appendChild(here);
+  }
 
-    var head = el('div', 'branch-head');
-    head.appendChild(personRow(BY[id], true));
-    host.appendChild(head);
+  /* ── переключение и отрисовка ───────────────────────── */
+  function renderTree(keep) {
+    var y = window.scrollY;
+    var host = document.getElementById('treeList');
+    host.innerHTML = '';
 
-    if ((CHILDREN[id] || []).length) branchLevel(id, 1, host);
-    else host.appendChild(el('p', 'empty', t('noKids')));
+    document.getElementById('treeTitle').textContent =
+      treeMode === 'gen' ? t('treeTitle') : t('branchTitle');
+    document.getElementById('treeLede').textContent =
+      treeMode === 'tree' ? t('treeHintTree')
+      : treeMode === 'list' ? t('treeHintList') : t('treeLede');
+    document.querySelectorAll('[data-tree-mode]').forEach(function (b) {
+      b.classList.toggle('is-on', b.dataset.treeMode === treeMode);
+      b.textContent = t(b.dataset.treeMode === 'tree' ? 'modeTree'
+                      : b.dataset.treeMode === 'list' ? 'modeList' : 'modeGen');
+    });
+
+    stageEl.dataset.mode = treeMode;
+    stageEl.hidden = (treeMode === 'gen');
+    renderCrumbs();
+
+    if (treeMode === 'tree') renderStage();
+    else if (treeMode === 'list') renderOutline();
+    else renderGenList(host);
 
     /* От Адая ветка доходит не до всех: у части родителя нет,
        часть вошла через брак. Прятать их нельзя — родня та же. */
-    if (id === ROOT) {
+    if (treeMode !== 'gen' && focusPerson() === ROOT) {
       [[t('mateHead'), INLAWS], [t('orphanHead'), LOST]].forEach(function (pair) {
         if (!pair[1].length) return;
         host.appendChild(el('div', 'group-head',
@@ -560,24 +925,6 @@
         });
       });
     }
-  }
-
-  function renderTree(keep) {
-    var host = document.getElementById('treeList');
-    var y = window.scrollY;
-    host.innerHTML = '';
-
-    document.getElementById('treeTitle').textContent =
-      treeMode === 'branch' ? t('branchTitle') : t('treeTitle');
-    document.getElementById('treeLede').textContent =
-      treeMode === 'branch' ? t('branchLede') : t('treeLede');
-    document.querySelectorAll('[data-tree-mode]').forEach(function (b) {
-      b.classList.toggle('is-on', b.dataset.treeMode === treeMode);
-      b.textContent = t(b.dataset.treeMode === 'branch' ? 'modeBranch' : 'modeGen');
-    });
-
-    if (treeMode === 'branch') renderBranch(host);
-    else renderGenList(host);
 
     if (keep) window.scrollTo(0, y);
   }
