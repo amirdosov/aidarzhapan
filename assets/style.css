@@ -446,7 +446,7 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 
 /* ── нижняя панель ──────────────────────────────────────── */
 .nav{
-  position:fixed; left:0; right:0; bottom:0; z-index:60;
+  position:fixed; left:0; right:0; bottom:0; z-index:95;
   display:flex; gap:2px;
   padding:6px 8px calc(6px + env(safe-area-inset-bottom));
   background:color-mix(in srgb, var(--bg) 88%, transparent);
@@ -998,4 +998,20 @@ body.locked .toast.is-on{transform:translate(-50%,0)}
   .lb-x{right:12px; top:12px}
   .lb-prev{left:8px}
   .lb-next{right:8px}
+}
+
+/* ── нижняя полоса и слои ────────────────────────────────
+   Панель стоит выше карточки и выше снимка: иначе полоса
+   «назад» пряталась под карточкой, а её как раз и ищут
+   в первую очередь — она крупная и всегда на одном месте.
+   Значит, карточке и снимку надо оставить под неё место. */
+@media (max-width:719px){
+  .sheet{padding-bottom:calc(61px + env(safe-area-inset-bottom))}
+  .sheet-body{max-height:calc(88svh - 61px); padding-bottom:26px}
+  .picker .sheet-body{max-height:calc(92svh - 61px)}
+  .lb{padding-bottom:calc(61px + env(safe-area-inset-bottom))}
+  .lb-fig{max-height:calc(100svh - 190px)}
+  .lb-fig img{max-height:calc(100svh - 250px)}
+  /* крестик снимка не нужен: закрывает та же нижняя полоса */
+  .lb-x{display:none}
 }

@@ -1504,7 +1504,8 @@
       deep ? t('back') : t('close');
   }
   navClose.addEventListener('click', function () {
-    if (layer === sheet && cardStack.length) openPerson(cardStack.pop(), true);
+    if (lbOpen) closeLB();
+    else if (layer === sheet && cardStack.length) openPerson(cardStack.pop(), true);
     else closeLayer();
   });
   document.addEventListener('keydown', function (e) {
