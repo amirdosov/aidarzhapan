@@ -47,6 +47,11 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 
+/* Атрибут hidden браузер гасит через display:none, но любое своё
+   правило с display это перебивает — у .sheet стоит flex, и окно
+   не пряталось. Поэтому hidden закрепляем явно. */
+[hidden]{display:none !important}
+
 body{
   margin:0;
   background:
