@@ -152,6 +152,25 @@
                  ru: '{n}, это ваше шежіре' },
     copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
 
+    gapsHead:  { kk: 'Толықтыруға көмектесіңіз', ru: 'Помогите дополнить' },
+    gapsLede:  { kk: 'Шежіре осылай жиналған: Алпамыс Орынбасарұлы ағайыннан ' +
+                     'сұрап отырған. Мына орындар әлі бос — білетін адамға ' +
+                     'сұрақты жіберіңіз.',
+                 ru: 'Так шежіре и собиралось: Алпамыс Орынбасарұлы расспрашивал ' +
+                     'родню. Эти места пока пустые — отправьте вопрос тому, ' +
+                     'кто может знать.' },
+    gapSend:   { kk: 'Сұрақты жіберу', ru: 'Отправить вопрос' },
+    gapsFoot:  { kk: 'Шежіреде {n} ақтаңдақ бар — толықтыруға көмектесіңіз',
+                 ru: 'В шежіре {n} пустых мест — помогите дополнить' },
+    askParent: { kk: '{n} — {a} тарауынан, бірақ шежіреде кімнің баласы екені ' +
+                     'жазылмаған. Білсеңіз, жазыңызшы. {a} балалары: {k}.',
+                 ru: '{n} — из ветки {a}, но в шежіре не записано, чей это ребёнок. ' +
+                     'Если знаете — подскажите. {his} дети: {k}.' },
+    askSex:    { kk: '{n} — ұл ма, қыз ба? Шежіреде жазылмаған.',
+                 ru: '{n} — мальчик или девочка? В шежіре не записано.' },
+    askName:   { kk: '{n} — шежіреде «аты -?» деп тұр, Қазан қаласы. Есімін білесіз бе?',
+                 ru: '{n} — в шежіре записано «аты -?», Казань. Знаете имя?' },
+
     modeTree:    { kk: 'Сызба', ru: 'Схема' },
     modeList:    { kk: 'Тізім', ru: 'Список' },
     modeGen:     { kk: 'Ұрпақ', ru: 'Колена' },
@@ -235,20 +254,23 @@
     }, 3000);
   }
 
-  /* Телефон делится сам, на большом экране кладём в буфер. */
-  function share(url, text) {
+  /* Телефон делится сам, на большом экране кладём в буфер.
+     В буфер иногда нужна не ссылка, а весь текст — например,
+     вопрос к родне: без него ссылка ничего не спрашивает. */
+  function share(url, text, clip) {
     if (navigator.share) {
       navigator.share({ title: t('brand'), text: text, url: url })
         .catch(function () {});
       return;
     }
+    var out = clip || url;
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(
+      navigator.clipboard.writeText(out).then(
         function () { toast(t('copied')); },
-        function () { copyFallback(url); });
+        function () { copyFallback(out); });
       return;
     }
-    copyFallback(url);
+    copyFallback(out);
   }
   function copyFallback(s) {
     var box = el('textarea');
@@ -916,6 +938,61 @@
   }
 
   /* ── переключение и отрисовка ───────────────────────── */
+  /* ── толықтыруға көмектесіңіз ────────────────────────
+     У тринадцати человек не записан родитель, у одного пол,
+     у одного имя. Сайт про них честно молчит — но ровно так
+     шежіре и собиралось: Алпамыс расспрашивал Төрме-апай
+     и Ережепбая. Поэтому пробел здесь не дыра, а готовый
+     вопрос, который можно переслать тому, кто помнит. */
+  var GAPS = DATA.people.filter(function (p) { return p.open; });
+
+  function gapText(p) {
+    var y = p.born ? ' ' + p.born : '';
+    if (p.open.ask === 'sex')  return t('askSex',  { n: p.name });
+    if (p.open.ask === 'name') return t('askName', { n: p.name + y });
+    var anc = BY[p.open.of];
+    if (!anc) return '';
+    var kids = (CHILDREN[p.open.of] || []).map(function (k) {
+      return BY[k].name + (BY[k].born ? ' ' + BY[k].born : '');
+    }).join(', ');
+    return t('askParent', {
+      n: p.name + y,
+      a: lang === 'kk' ? poss(anc.name) : anc.name,
+      his: anc.sex === 'f' ? 'Её' : 'Его',
+      k: kids
+    });
+  }
+
+  function renderGaps(host) {
+    if (!GAPS.length) return;
+    var head = el('div', 'group-head',
+      esc(t('gapsHead')) + ' <span>' + GAPS.length + '</span>');
+    head.id = 'gaps';
+    host.appendChild(head);
+    host.appendChild(el('p', 'gaps-lede', esc(t('gapsLede'))));
+
+    GAPS.forEach(function (p) {
+      var box = el('div', 'gap');
+      var name = el('button', 'gap-name', esc(p.name) +
+        (years(p) ? ' <span>' + esc(years(p)) + '</span>' : ''));
+      name.type = 'button';
+      name.addEventListener('click', function () { openPerson(p.id); });
+      box.appendChild(name);
+
+      var q = gapText(p);
+      box.appendChild(el('p', 'gap-q', esc(q)));
+
+      var send = el('button', 'gap-send', esc(t('gapSend')));
+      send.type = 'button';
+      send.addEventListener('click', function () {
+        var url = linkTo({ p: p.id });
+        share(url, q, q + '\n' + url);
+      });
+      box.appendChild(send);
+      host.appendChild(box);
+    });
+  }
+
   function renderTree(keep) {
     var y = window.scrollY;
     var host = document.getElementById('treeList');
@@ -952,6 +1029,8 @@
         });
       });
     }
+
+    renderGaps(host);
 
     if (keep) window.scrollTo(0, y);
   }
@@ -1396,6 +1475,18 @@
     search(this.value, document.getElementById('searchList'), true);
   });
   pickInput.addEventListener('input', function () { renderPicker(this.value); });
+  /* Пробелы должны попадаться на глаза, а не лежать в конце «Ағаш»:
+     строку про них видно с любого экрана. */
+  document.getElementById('gapsLink').addEventListener('click', function () {
+    setView('tree');
+    setTimeout(function () {
+      var node = document.getElementById('gaps');
+      if (!node) return;
+      window.scrollTo({ top: window.scrollY + node.getBoundingClientRect().top - 80,
+                        behavior: 'smooth' });
+    }, 60);
+  });
+
   document.getElementById('meBtn').addEventListener('click', openPicker);
   document.getElementById('heroPick').addEventListener('click', openPicker);
 
@@ -1459,6 +1550,9 @@
 
     document.getElementById('searchInput').placeholder = t('searchHint');
     pickInput.placeholder = t('searchHint');
+
+    document.getElementById('gapsLink').textContent =
+      t('gapsFoot', { n: GAPS.length });
 
     var meLabel = document.getElementById('meLabel');
     meLabel.textContent = !ego ? t('pickCta')
