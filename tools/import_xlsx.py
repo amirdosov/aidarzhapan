@@ -413,6 +413,30 @@ def compute_gen(roster, by_id):
     return roster
 
 
+def second_parent(roster, by_id, unions):
+    """Второй родитель выводится из пар, но только когда он однозначен.
+
+    В шежіре у человека записан один родитель — тот, через кого он попал
+    в род. Если у этого родителя известна ровно одна пара, второй её
+    участник и есть второй родитель. У Мұңала жён две, дети между ними
+    поделены — там второго родителя не выводим, будет ошибка.
+    """
+    pairs = defaultdict(list)
+    for u in unions:
+        a, b = u["partners"]
+        pairs[a].append(b)
+        pairs[b].append(a)
+
+    for p in roster:
+        par = by_id.get(p.get("parent") or "")
+        if not par:
+            continue
+        mates = pairs.get(par["id"], [])
+        if len(mates) == 1 and mates[0] in by_id:
+            p["parent2"] = mates[0]
+    return roster
+
+
 def main():
     wb = openpyxl.load_workbook(XLSX)
     s1, s2 = wb["Лист1"], wb["Лист2"]
@@ -479,13 +503,16 @@ def main():
 
     compute_gen(roster, by_id)
     unions = manual.get("unions", [])
+    second_parent(roster, by_id, unions)
     write_report(roster, blocks, by_id, added, unions)
     write_js(roster, unions)
-    print("людей: %d | со связью: %d | колено посчитано: %d | отчёт: %s" % (
-        len(roster),
-        sum(1 for p in roster if p.get("parent")),
-        sum(1 for p in roster if p.get("gen")),
-        REPORT.relative_to(ROOT)))
+    print("людей: %d | со связью: %d | колено посчитано: %d | "
+          "со вторым родителем: %d | отчёт: %s" % (
+              len(roster),
+              sum(1 for p in roster if p.get("parent")),
+              sum(1 for p in roster if p.get("gen")),
+              sum(1 for p in roster if p.get("parent2")),
+              REPORT.relative_to(ROOT)))
 
 
 def hint(p, by_coord):
@@ -611,7 +638,8 @@ def write_js(roster, unions):
     for p in sorted(roster, key=lambda x: (x.get("gen") or 99, x.get("born") or 0)):
         rec = {"id": p["id"], "gen": p.get("gen"), "name": p["name"],
                "sex": p.get("sex"), "line": p.get("line")}
-        for k in ("alt", "born", "birthday", "died", "parent", "ru", "note"):
+        for k in ("alt", "born", "birthday", "died", "parent", "parent2",
+                  "ru", "note"):
             if p.get(k):
                 rec[k] = p[k]
         rows.append("    " + json.dumps(rec, ensure_ascii=False))
@@ -622,8 +650,10 @@ def write_js(roster, unions):
         "   Не править руками: правки — в tools/manual.json,\n"
         "   потом python tools/import_xlsx.py */\n\n"
         "window.AIDARZHAPAN = {\n"
-        "  /* line: main — прямая линия, rod — род, zhien — жиен,\n"
-        "     out — за пределами рода, in — вошедшие в род жёны */\n"
+        "  /* line:    main — прямая линия, rod — род, zhien — жиен,\n"
+        "              out — за пределами рода, in — вошедшие в род жёны\n"
+        "     parent:  родитель, через которого человек попал в шежіре\n"
+        "     parent2: второй родитель, выведен из единственной пары */\n"
         "  people: [\n" + ",\n".join(rows) + "\n  ],\n\n"
         "  /* Известные супружеские пары. Шежіре — мужская линия,\n"
         "     поэтому жён мало и все они названы поимённо. */\n"
