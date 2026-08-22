@@ -76,6 +76,7 @@
     forSpouse: { kk: '{n} үшін:', ru: 'для {n}:' },
 
     navTape:   { kk: 'Тізбек', ru: 'Линия' },
+    navKin:    { kk: 'Туыс',   ru: 'Родня' },
     navTree:   { kk: 'Ағаш',   ru: 'Древо' },
     navSearch: { kk: 'Іздеу',  ru: 'Поиск' },
     close:     { kk: 'ЖАБУ',   ru: 'ЗАКРЫТЬ' },
@@ -84,6 +85,32 @@
     treeTitle:   { kk: 'Барлығы 139 адам', ru: 'Все 139 человек' },
     treeLede:    { kk: 'Ұрпақ бойынша. Кез келген есімді басыңыз',
                    ru: 'По коленам. Нажмите на любое имя' },
+    kinEyebrow: { kk: 'Туыстар', ru: 'Родня' },
+    kinTitle:   { kk: 'Менің туыстарым', ru: 'Мои родственники' },
+    kinLede:    { kk: '139 адамның ішінен жақындарыңыз — іздеудің қажеті жоқ',
+                  ru: 'Ваши близкие среди 139 — искать не нужно' },
+    kinAsk:     { kk: 'Алдымен өзіңізді таңдаңыз', ru: 'Сначала выберите себя' },
+    kinFar:     { kk: 'Тағы {n} алыс туыс — «Ағаш» пен «Іздеуден» қараңыз',
+                  ru: 'Ещё {n} дальних родственников — смотрите в «Древе» и «Поиске»' },
+    kinCount:   { kk: 'Жақын туыс: {n}', ru: 'Близкой родни: {n}' },
+    kinNone:    { kk: 'Шежіреде сіздің ата-анаңыз әлі жазылмаған — сондықтан туыстық та есептелмейді',
+                  ru: 'В шежіре пока не записан ваш родитель — поэтому и родство не считается' },
+
+    cSpouse:    { kk: 'Жұбайыңыз', ru: 'Супруг(а)' },
+    cParents:   { kk: 'Ата-анаңыз', ru: 'Родители' },
+    cSibs:      { kk: 'Бауырларыңыз', ru: 'Братья и сёстры' },
+    cKids:      { kk: 'Балаларыңыз', ru: 'Дети' },
+    cGrandkids: { kk: 'Немере-шөберелеріңіз', ru: 'Внуки и правнуки' },
+    cNephews:   { kk: 'Жиендеріңіз', ru: 'Племянники' },
+    cNephKids:  { kk: 'Жиендеріңіздің балалары', ru: 'Дети племянников' },
+    cGrandpar:  { kk: 'Ата-әжеңіз', ru: 'Дед и бабушка' },
+    cUncles:    { kk: 'Әке-шешеңіздің бауырлары', ru: 'Дяди и тёти' },
+    cCousins:   { kk: 'Немере ағайындарыңыз', ru: 'Двоюродные' },
+    cCousKids:  { kk: 'Немере ағайынның балалары', ru: 'Дети двоюродных' },
+    cGrandUnc:  { kk: 'Атаңыздың бауырлары', ru: 'Братья и сёстры деда' },
+    cSecond:    { kk: 'Шөбере ағайындарыңыз', ru: 'Троюродные' },
+    cInLaw:     { kk: 'Құда-жекжат', ru: 'Родня через брак' },
+
     searchEyebrow: { kk: 'Іздеу', ru: 'Поиск' },
     searchTitle:   { kk: 'Есім бойынша', ru: 'По имени' },
     searchHint:    { kk: 'Есімнің басын жазыңыз', ru: 'Наберите начало имени' },
@@ -948,6 +975,87 @@
       });
   }
 
+  /* ── менің туыстарым ────────────────────────────────
+     Шежіре открывают не ради Адая, а чтобы посмотреть на живых.
+     Чтобы найти двоюродного брата, надо было либо листать 139
+     строк, либо помнить, как его зовут. Здесь родня разложена
+     по родству: считаем его для всех сразу и раскладываем по
+     полкам — «кто мне кто» словами, а не деревом. */
+  function isBlood(r, up, down, downMax) {
+    if (!r || r.kind !== 'blood') return false;
+    if (r.up !== up) return false;
+    return downMax === undefined ? r.down === down
+                                 : (r.down >= down && r.down <= downMax);
+  }
+  var CIRCLES = [
+    ['cSpouse',   function (r) { return r.kind === 'spouse-own'; }],
+    ['cParents',  function (r) { return isBlood(r, 1, 0); }],
+    ['cSibs',     function (r) { return isBlood(r, 1, 1); }],
+    ['cKids',     function (r) { return isBlood(r, 0, 1); }],
+    ['cGrandkids',function (r) { return isBlood(r, 0, 2, 9); }],
+    ['cNephews',  function (r) { return isBlood(r, 1, 2); }],
+    ['cNephKids', function (r) { return isBlood(r, 1, 3, 9); }],
+    ['cGrandpar', function (r) { return isBlood(r, 2, 0) || isBlood(r, 3, 0); }],
+    ['cUncles',   function (r) { return isBlood(r, 2, 1); }],
+    ['cCousins',  function (r) { return isBlood(r, 2, 2); }],
+    ['cCousKids', function (r) { return isBlood(r, 2, 3, 9); }],
+    ['cGrandUnc', function (r) { return isBlood(r, 3, 1); }],
+    ['cSecond',   function (r) { return isBlood(r, 3, 2, 9); }],
+    ['cInLaw',    function (r) { return r.kind === 'in-law' || r.kind === 'spouse'; }]
+  ];
+
+  function renderKin() {
+    var host = document.getElementById('kinList');
+    host.innerHTML = '';
+    document.getElementById('kinHint').textContent = '';
+
+    if (!ego) {
+      var ask = el('button', 'cta', esc(t('kinAsk')));
+      ask.type = 'button';
+      ask.addEventListener('click', openPicker);
+      var wrap = el('div', 'kin-empty');
+      wrap.appendChild(ask);
+      host.appendChild(wrap);
+      return;
+    }
+
+    var groups = {}, far = 0, near = 0;
+    DATA.people.forEach(function (p) {
+      if (p.id === ego) return;
+      var r = KIN.relate(ego, p.id);
+      if (!r) return;
+      for (var i = 0; i < CIRCLES.length; i++) {
+        if (CIRCLES[i][1](r)) {
+          (groups[CIRCLES[i][0]] = groups[CIRCLES[i][0]] || []).push(p);
+          near++;
+          return;
+        }
+      }
+      if (r.kind === 'blood') far++;
+    });
+
+    /* Кто выбрал себя как супруга, видит родню своей половины —
+       и должен об этом помнить, иначе «ваша мать» собьёт с толку. */
+    document.getElementById('kinHint').textContent = egoVia
+      ? t('forSpouse', { n: BY[egoVia].name }) + ' ' + t('kinCount', { n: near })
+      : t('kinCount', { n: near });
+
+    CIRCLES.forEach(function (c) {
+      var list = groups[c[0]];
+      if (!list || !list.length) return;
+      host.appendChild(el('div', 'group-head',
+        esc(t(c[0])) + ' <span>' + list.length + '</span>'));
+      list.sort(function (a, b) { return (a.born || 9999) - (b.born || 9999); })
+        .forEach(function (p) { host.appendChild(personRow(p, true, true)); });
+    });
+
+    /* У семнадцати человек родитель не записан. Если себя выбрал
+       как раз такой, экран был бы пустым — а это не «родни нет»,
+       это пробел в шежіре, и сказать надо именно так. */
+    if (!near) host.appendChild(el('p', 'empty', esc(t('kinNone'))));
+    if (far) host.appendChild(el('p', 'empty', esc(t('kinFar', { n: far }))));
+  }
+
   /* ── поиск ──────────────────────────────────────────── */
   function search(q, host, withRel) {
     host.innerHTML = '';
@@ -1168,7 +1276,10 @@
     if (via) localStorage.setItem('az-ego-via', via);
     else localStorage.removeItem('az-ego-via');
     paint();
-    showMeInTape();
+    /* С экрана «Туыс» выбор себя не уводит: там сразу видно,
+       ради чего его делали — родня уже разложена по полкам. */
+    if (view === 'kin') window.scrollTo(0, 0);
+    else showMeInTape();
   }
 
   /* Выбор себя должен быть виден. Иначе человек нажал — и, если он
@@ -1254,13 +1365,14 @@
   var view = 'tape';
   function setView(name) {
     view = name;
-    ['tape', 'tree', 'search'].forEach(function (v) {
+    ['tape', 'kin', 'tree', 'search'].forEach(function (v) {
       document.getElementById('view-' + v).hidden = (v !== name);
     });
     document.querySelectorAll('.nav-btn').forEach(function (b) {
       b.classList.toggle('is-on', b.dataset.view === name);
     });
     window.scrollTo(0, 0);
+    if (name === 'kin') renderKin();
     if (name === 'tree') renderTree();
     if (name === 'search') {
       search(document.getElementById('searchInput').value,
@@ -1353,6 +1465,7 @@
     document.getElementById('railMain').innerHTML =
       ego ? t('railMe', { n: CHAIN.length }) : t('railAny');
 
+    if (view === 'kin') renderKin();
     if (view === 'tree') renderTree();
     if (view === 'search') search(document.getElementById('searchInput').value,
                                   document.getElementById('searchList'), true);

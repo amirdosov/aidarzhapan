@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=8">
+<link rel="stylesheet" href="assets/style.css?v=9">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
 </head>
 <body>
@@ -76,6 +76,17 @@
     </div>
 
     <div class="tape" id="tape"></div>
+  </section>
+
+  <!-- ═══════════ ТУЫСТАР ═══════════ -->
+  <section class="view" id="view-kin" hidden>
+    <div class="view-head">
+      <p class="eyebrow" data-i18n="kinEyebrow"></p>
+      <h2 data-i18n="kinTitle"></h2>
+      <p class="muted" data-i18n="kinLede"></p>
+      <p class="kin-hint" id="kinHint"></p>
+    </div>
+    <div class="list" id="kinList"></div>
   </section>
 
   <!-- ═══════════ АҒАШ ═══════════ -->
@@ -150,6 +161,7 @@
 <!-- ═══════════ нижняя панель ═══════════ -->
 <nav class="nav" id="nav">
   <button class="nav-btn is-on" data-view="tape"><span data-i18n="navTape"></span></button>
+  <button class="nav-btn" data-view="kin"><span data-i18n="navKin"></span></button>
   <button class="nav-btn" data-view="tree"><span data-i18n="navTree"></span></button>
   <button class="nav-btn" data-view="search"><span data-i18n="navSearch"></span></button>
   <button class="nav-close" id="navClose" hidden data-i18n="close"></button>
@@ -184,6 +196,6 @@
 <script src="data/stories.js?v=2"></script>
 <script src="assets/photos.js?v=2"></script>
 <script src="assets/kinship.js?v=2"></script>
-<script src="assets/app.js?v=8"></script>
+<script src="assets/app.js?v=9"></script>
 </body>
 </html>
