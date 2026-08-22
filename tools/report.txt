@@ -1,0 +1,244 @@
+Отчёт импорта. Сверять глазами, а не на веру.
+Пересобрать: python tools/import_xlsx.py
+
+СОСТАВ ПО КОЛЕНАМ (колено от Адая, посчитано по цепочке)
+   1 (1): Адай*
+   2 (1): Айтнияз*
+   3 (2): Құдайке, Келімберді*
+   4 (8): Тәжіке, Қосай, Құнанорыс, Ақпан, Жеменей, Балықшы, Мұңал*, Тобыш
+   5 (5): Алақұлан, Әлі*, Бәйімбет, Жаулы, Шоғы
+   6 (2): Аққұлан, Қошқар*
+   7 (2): Жанғозы, Абыз*
+   8 (5): Наурызәлі, Есенәлі, Сүгірәлі*, Дербісәлі, Төлеке
+   9 (2): АйдарЖапан*, Шенен
+  10 (5): Қарақұл, Қалдыбай*, Мәмбет, Дулат, Сары
+  11 (1): Қосан*
+  12 (11): Бозтай, Айтуған*, Қарамұрат, Төремұрат, Бектұр, Теңізбай, Алтыбай, Қожан, Шақан, Байсақал, Кенжебек
+  13 (3): Бәйтім*, Ермағанбет, Бәдім
+  14 (1): Күсеп*
+  15 (4): Мотан, Дос*, Нияз, Кенжебек
+  16 (9): Қосбала*, Қосмырза, Тұймеш, Қияқбай, Олжабай, Түрме, Жаңғақбай, Өтемұрат, Наурызбай
+  17 (15): Орынбасар*, Жалғасбай, Тыныштық, Ізбасар, Аманжол, Ер бала, Несібелі, Жамилә, Эврахим, Жаңыл, Тоқсанбай, Серік, Айзада, Қаражан, Мәтжан
+  18 (13): Айтмағанбет, Аманкелді, Гүләйім, Алпамыс*, Нұржан, Гүлнар, Гүлжан, Айнагүл, Рустам, Алия, Райса, Талғат, Амантай
+  19 (15): Жанаргүл, Ержан, Әміржан, Әділжан, Айгүл, Бауыржан, Мейрамгүл, Гүлмира, Ахмед, Алтынай, Әли, Кәмшат, Мунира, Әділхан, Зікрулла
+  20 (5): Мансур, Селина, Жұлдыз, Баян, Аделя
+  ?? (19): Амина, Райана, Темирлан, Сымбат, Али, Олеся, Руслан, Даулет, Асет, Инаят, Афиат, Диас, Мансур, Абдрахман, Зәру, Ермек, Айбек, Есет, Батыр
+  * — прямая линия
+
+БЕЗ РОДИТЕЛЯ — НУЖНО СПРОСИТЬ У СЕМЬИ: 17
+  строка-волна 17  Абдрахман               P22    Абдрахман                        
+  строка-волна 17  Зәру                    P24    Зәру                             выше стоит Түрме (O23)
+  строка-волна 19  Али              2022   W52    Али 2022                         
+  строка-волна 19  Амина            1998   S52    Амина 1998                       
+  строка-волна 19  Асет             1990   AD52   Асет 1990                        
+  строка-волна 19  Даулет           1989   AC52   Даулет 1989                      
+  строка-волна 19  Олеся            1987   Y52    Олеся 1987                       
+  строка-волна 19  Райана           2014   T52    Райана 2014                      
+  строка-волна 19  Руслан           1984   Z52    Руслан 1984                      
+  строка-волна 19  Сымбат           2016   V52    Сымбат 2016                      
+  строка-волна 19  Темирлан         2015   U52    Темирлан 2015                    
+  строка-волна 20  Афиат                   D54    Афиат                            выше стоит Ержан (R45)
+  строка-волна 20  Батыр                   S62    Батыр                            выше стоит Мейрамгүл (R61)
+  строка-волна 20  Диас             2008   Z54    Диас 2008                        
+  строка-волна 20  Есет                    S60    Есет                             выше стоит Бауыржан (R57)
+  строка-волна 20  Инаят                   C54    Инаят                            
+  строка-волна 20  Мансур           2017   AD54   Мансур 2017                      
+
+ДОБАВЛЕНЫ С ЛИСТ1 (на схеме Лист2 их нет): 16
+  O23    Түрме            1910   пол: f    niyaz
+  O27    Жаңғақбай        1898   пол: m    niyaz
+  O139   Өтемұрат         1905   пол: m    kenzhebek-1880
+  O141   Наурызбай        1918   пол: m    kenzhebek-1880
+  P22    Абдрахман               пол: m    родитель не найден
+  P23    Қаражан                 пол: ?    turme
+  P24    Зәру                    пол: f    родитель не найден
+  P27    Мәтжан           1923   пол: m    zhangaqbai
+  Q22    Ермек                   пол: m    abdrahman
+  Q22    Айбек                   пол: m    abdrahman
+  Q23    Амантай                 пол: m    qarazhan
+  S41    Жұлдыз                  пол: f    zhanargul
+  S60    Есет                    пол: m    родитель не найден
+  S61    Баян                    пол: ?    meiramgul
+  S62    Батыр                   пол: m    родитель не найден
+  S65    Аделя                   пол: f    gulmira
+
+ПОЛ НЕ ОПРЕДЕЛЁН: 2
+  Қаражан          P23 Лист1
+  Баян             S61 Лист1
+
+ПОЛ ПРОСТАВЛЕН ВРУЧНУЮ — ПОДТВЕРДИТЬ: 14
+  Диас             m    (по имени)
+  Жаңғақбай        m    (по имени)
+  Өтемұрат         m    (по имени)
+  Наурызбай        m    (по имени)
+  Абдрахман        m    (по имени)
+  Зәру             f    (по имени)
+  Мәтжан           m    (по имени)
+  Ермек            m    (по имени)
+  Айбек            m    (по имени)
+  Амантай          m    (по имени)
+  Жұлдыз           f    (по имени)
+  Есет             m    (по имени)
+  Батыр            m    (по имени)
+  Аделя            f    (по имени)
+
+КОЛЕНО НЕ СОВПАЛО СО СТРОКОЙ ФАЙЛА: 7
+  Несібелі         строка-волна 18, по цепочке 17 (через olzhabai)
+  Жамилә           строка-волна 18, по цепочке 17 (через olzhabai)
+  Эврахим          строка-волна 18, по цепочке 17 (через olzhabai)
+  Жаңыл            строка-волна 18, по цепочке 17 (через olzhabai)
+  Тоқсанбай        строка-волна 18, по цепочке 17 (через olzhabai)
+  Серік            строка-волна 18, по цепочке 17 (через olzhabai)
+  Айзада           строка-волна 18, по цепочке 17 (через olzhabai)
+
+ЛИСТ1: ЯЧЕЙКИ БЕЗ ЧЕЛОВЕКА: 0
+
+ЛИСТ1: ПУСТЫЕ ОБЪЕДИНЁННЫЕ ЯЧЕЙКИ: 9
+  O9    волна 16  строки 9-20  дети: -  НЕ ОПОЗНАН
+  P9    волна 17  строки 9-20  дети: -  НЕ ОПОЗНАН
+  P36   волна 17  строки 36-38  дети: -  НЕ ОПОЗНАН
+  P112  волна 17  строки 112-114  дети: -  НЕ ОПОЗНАН
+  Q9    волна 18  строки 9-20  дети: -  НЕ ОПОЗНАН
+  Q27   волна 18  строки 27-33  дети: -  НЕ ОПОЗНАН
+  Q36   волна 18  строки 36-38  дети: -  НЕ ОПОЗНАН
+  Q68   волна 18  строки 68-74  дети: Ахмед, Алтынай, Әли, Кәмшат  -> Алпамыс
+  Q112  волна 18  строки 112-114  дети: -  НЕ ОПОЗНАН
+
+ССЫЛКИ В НИКУДА: 0
+
+ПРИМЕЧАНИЯ ИЗ ЯЧЕЕК
+  Қосмырза         бала кезінде қайтыс болған
+  Аманжол          бала кезінде 6 7 жасында қайтыс болды
+  Ер бала          аты -? Қазан қ
+  Мәтжан           3 жасында қызылша ауруынан қайтыс болған
+
+ВСЕ ЛЮДИ
+   1 adai               Адай             m    main   —                  
+   2 aitniyaz           Айтнияз          m    main   adai               прямая линия
+   3 kelimberdi         Келімберді       m    main   aitniyaz           прямая линия
+   3 qudaike            Құдайке          m    rod    aitniyaz           прямая линия
+   4 aqpan              Ақпан            m    rod    kelimberdi         прямая линия
+   4 balyqshy           Балықшы          m    rod    kelimberdi         прямая линия
+   4 zhemenei           Жеменей          m    rod    kelimberdi         прямая линия
+   4 munal              Мұңал            m    main   kelimberdi         прямая линия
+   4 tobysh             Тобыш            m    rod    kelimberdi         прямая линия
+   4 tazhike            Тәжіке           m    rod    kelimberdi         прямая линия
+   4 qosai              Қосай            m    rod    kelimberdi         прямая линия
+   4 qunanorys          Құнанорыс        m    rod    kelimberdi         прямая линия
+   5 alaqulan           Алақұлан         m    rod    munal              прямая линия
+   5 baiimbet           Бәйімбет         m    rod    munal              прямая линия
+   5 zhauly             Жаулы            m    rod    munal              прямая линия
+   5 shogy              Шоғы             m    rod    munal              прямая линия
+   5 ali                Әлі              m    main   munal              прямая линия
+   6 aqqulan            Аққұлан          m    rod    ali                прямая линия
+   6 qoshqar            Қошқар           m    main   ali                прямая линия
+   7 abyz               Абыз             m    main   qoshqar            прямая линия
+   7 zhangozy           Жанғозы          m    rod    qoshqar            прямая линия
+   8 derbisali          Дербісәлі        m    rod    abyz               прямая линия
+   8 esenali            Есенәлі          m    rod    abyz               прямая линия
+   8 nauryzali          Наурызәлі        m    rod    abyz               прямая линия
+   8 sugirali           Сүгірәлі         m    main   abyz               прямая линия
+   8 toleke             Төлеке           m    rod    abyz               прямая линия
+   9 aidarzhapan        АйдарЖапан       m    main   sugirali           прямая линия
+   9 shenen             Шенен            m    rod    sugirali           прямая линия
+  10 dulat              Дулат            m    rod    aidarzhapan        прямая линия
+  10 mambet             Мәмбет           m    rod    aidarzhapan        прямая линия
+  10 sary               Сары             m    rod    aidarzhapan        прямая линия
+  10 qaldybai           Қалдыбай         m    main   aidarzhapan        прямая линия
+  10 qaraqul            Қарақұл          m    rod    aidarzhapan        прямая линия
+  11 qosan              Қосан            m    main   qaldybai           прямая линия
+  12 aitugan            Айтуған          m    main   qosan              прямая линия
+  12 altybai            Алтыбай          m    rod    qosan              прямая линия
+  12 baisaqal           Байсақал         m    rod    qosan              прямая линия
+  12 bektur             Бектұр           m    rod    qosan              прямая линия
+  12 boztai             Бозтай           m    rod    qosan              прямая линия
+  12 kenzhebek          Кенжебек         m    rod    qosan              прямая линия
+  12 tenizbai           Теңізбай         m    rod    qosan              прямая линия
+  12 toremurat          Төремұрат        m    rod    qosan              прямая линия
+  12 shaqan             Шақан            m    rod    qosan              прямая линия
+  12 qaramurat          Қарамұрат        m    rod    qosan              прямая линия
+  12 qozhan             Қожан            m    rod    qosan              прямая линия
+  13 badim              Бәдім            m    rod    aitugan            прямая линия
+  13 baitim             Бәйтім           m    main   aitugan            прямая линия
+  13 ermaganbet         Ермағанбет       m    rod    aitugan            прямая линия
+  14 kusep              Күсеп            m    main   baitim             прямая линия
+  15 dos                Дос              m    main   kusep              прямая линия
+  15 kenzhebek-1880     Кенжебек         m    rod    kusep              прямая линия
+  15 motan              Мотан            m    rod    kusep              прямая линия
+  15 niyaz              Нияз             m    rod    kusep              прямая линия
+  16 zhangaqbai         Жаңғақбай        m    rod    niyaz              manual.json
+  16 nauryzbai          Наурызбай        m    rod    kenzhebek-1880     manual.json
+  16 olzhabai           Олжабай          m    rod    dos                Лист1 O124
+  16 turme              Түрме            f    rod    niyaz              Лист1 O23
+  16 tuimesh            Тұймеш           f    out    dos                Лист1 O112
+  16 qiyaqbai           Қияқбай          m    rod    dos                Лист1 O116
+  16 qosbala            Қосбала          m    main   dos                Лист1 O41
+  16 qosmyrza           Қосмырза         m    rod    dos                Лист1 O36
+  16 otemurat           Өтемұрат         m    rod    kenzhebek-1880     manual.json
+  17 izbasar            Ізбасар          m    rod    qosbala            Лист1 P98
+  17 aizada             Айзада           f    out    olzhabai           Лист1 Q137
+  17 amanzhol           Аманжол          m    rod    qosbala            Лист1 P106
+  17 er-bala            Ер бала          m    rod    qiyaqbai           Лист1 P116
+  17 zhalgasbai         Жалғасбай        m    rod    qosbala            Лист1 P82
+  17 zhamila            Жамилә           f    out    olzhabai           Лист1 Q127
+  17 zhanyl             Жаңыл            f    out    olzhabai           Лист1 Q131
+  17 matzhan            Мәтжан           m    rod    zhangaqbai         manual.json
+  17 nesibeli           Несібелі         f    out    olzhabai           Лист1 Q124
+  17 orynbasar          Орынбасар        m    main   qosbala            Лист1 P41
+  17 serik              Серік            m    rod    olzhabai           Лист1 Q135
+  17 toqsanbai          Тоқсанбай        m    rod    olzhabai           Лист1 Q133
+  17 tynyshtyq          Тыныштық         f    out    qosbala            Лист1 P90
+  17 evrahim            Эврахим          m    rod    olzhabai           Лист1 Q129
+  17 qarazhan           Қаражан          ?    rod    turme              Лист1 P23
+  18 ainagul            Айнагүл          f    out    zhalgasbai         Лист1 Q88
+  18 aitmaganbet        Айтмағанбет      m    rod    orynbasar          Лист1 Q41
+  18 aliya              Алия             f    out    izbasar            Лист1 Q102
+  18 alpamys            Алпамыс          m    main   orynbasar          Лист1 Q68
+  18 amankeldi          Аманкелді        m    rod    orynbasar          Лист1 Q48
+  18 amantai            Амантай          m    rod    qarazhan           manual.json
+  18 gulzhan            Гүлжан           f    out    zhalgasbai         Лист1 Q86
+  18 gulnar             Гүлнар           f    out    zhalgasbai         Лист1 Q82
+  18 gulaiim            Гүләйім          f    out    orynbasar          Лист1 Q56
+  18 nurzhan            Нұржан           m    rod    orynbasar          Лист1 Q76
+  18 raisa              Райса            f    out    izbasar            Лист1 Q104
+  18 rustam             Рустам           m    rod    izbasar            Лист1 Q98
+  18 talgat             Талғат           m    rod    izbasar            Лист1 Q100
+  19 aigul              Айгүл            f    out    amankeldi          Лист1 R53
+  19 altynai            Алтынай          f    out    alpamys            Лист1 R70
+  19 ahmed              Ахмед            m    rod    alpamys            Лист1 R68
+  19 bauyrzhan          Бауыржан         m    zhien  gulaiim            Лист1 R57
+  19 gulmira            Гүлмира          f    out    gulaiim            Лист1 R65
+  19 erzhan             Ержан            m    rod    aitmaganbet        Лист1 R45
+  19 zhanargul          Жанаргүл         f    out    aitmaganbet        Лист1 R41
+  19 zikrulla           Зікрулла         m    rod    nurzhan            Лист1 R80
+  19 kamshat            Кәмшат           f    out    alpamys            Лист1 R74
+  19 meiramgul          Мейрамгүл        f    out    gulaiim            Лист1 R61
+  19 munira             Мунира           f    out    nurzhan            Лист1 R76
+  19 adilzhan           Әділжан          m    rod    amankeldi          Лист1 R51
+  19 adilhan            Әділхан          m    rod    nurzhan            Лист1 R78
+  19 ali-2005           Әли              m    rod    alpamys            Лист1 R72
+  19 amirzhan           Әміржан          m    rod    amankeldi          Лист1 R48
+  20 adelya             Аделя            f    rod    gulmira            manual.json
+  20 bayan              Баян             ?    rod    meiramgul          Лист1 S61
+  20 zhuldyz            Жұлдыз           f    rod    zhanargul          manual.json
+  20 mansur             Мансур           m    zhien  aigul              Лист1 S53
+  20 selina             Селина           f    out    aigul              manual.json
+  ?? abdrahman          Абдрахман        m    rod    —                  manual.json
+  ?? aibek              Айбек            m    rod    abdrahman          manual.json
+  ?? ali-2022           Али              m    rod    —                  
+  ?? amina              Амина            f    out    —                  
+  ?? aset               Асет             m    rod    —                  
+  ?? afiat              Афиат            f    out    —                  
+  ?? batyr              Батыр            m    rod    —                  manual.json
+  ?? daulet             Даулет           m    rod    —                  
+  ?? dias               Диас             m    rod    —                  manual.json
+  ?? ermek              Ермек            m    rod    abdrahman          manual.json
+  ?? eset               Есет             m    rod    —                  manual.json
+  ?? zaru               Зәру             f    rod    —                  manual.json
+  ?? inayat             Инаят            f    out    —                  
+  ?? mansur-2017        Мансур           m    rod    —                  
+  ?? olesya             Олеся            f    out    —                  
+  ?? raiana             Райана           f    out    —                  
+  ?? ruslan             Руслан           m    rod    —                  
+  ?? symbat             Сымбат           f    out    —                  
+  ?? temirlan           Темирлан         m    rod    —                  

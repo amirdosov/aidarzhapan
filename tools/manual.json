@@ -1,0 +1,40 @@
+{
+  "_comment": [
+    "Ручная разметка поверх импорта. Всё, что нельзя вычитать из xlsx.",
+    "После правки: python tools/import_xlsx.py",
+    "",
+    "blocks  — ячейка Лист1 -> id человека, если автоматика её не опознала",
+    "parents — id ребёнка -> id родителя",
+    "people  — правки полей человека; sex_src подписывает, откуда взят пол",
+    "extra   — люди, которых в шежіре нет (данные текущего сайта)"
+  ],
+
+  "blocks": {
+    "Q68": "alpamys",
+    "S44": "inayat"
+  },
+
+  "parents": {
+    "selina": "aigul"
+  },
+
+  "people": {
+    "zhangaqbai": { "sex": "m", "sex_src": "по имени" },
+    "otemurat":   { "sex": "m", "sex_src": "по имени" },
+    "nauryzbai":  { "sex": "m", "sex_src": "по имени" },
+    "abdrahman":  { "sex": "m", "sex_src": "по имени" },
+    "matzhan":    { "sex": "m", "sex_src": "по имени" },
+    "ermek":      { "sex": "m", "sex_src": "по имени" },
+    "aibek":      { "sex": "m", "sex_src": "по имени" },
+    "amantai":    { "sex": "m", "sex_src": "по имени" },
+    "eset":       { "sex": "m", "sex_src": "по имени" },
+    "batyr":      { "sex": "m", "sex_src": "по имени" },
+    "dias":       { "sex": "m", "sex_src": "по имени" },
+    "zhuldyz":    { "sex": "f", "sex_src": "по имени" },
+    "baian":      { "sex": "f", "sex_src": "по имени" },
+    "adelya":     { "sex": "f", "sex_src": "по имени" },
+    "zaru":       { "sex": "f", "sex_src": "по имени" }
+  },
+
+  "extra": []
+}
