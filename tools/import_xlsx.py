@@ -500,10 +500,6 @@ def main():
         if child in by_id:
             by_id[child]["parent"] = parent
             by_id[child]["src"] = "manual.json"
-    # незакрытые места: сайт делает из них вопрос к родне
-    for pid, what in manual.get("open", {}).items():
-        if pid in by_id:
-            by_id[pid]["open"] = what
 
     compute_gen(roster, by_id)
     unions = manual.get("unions", [])
@@ -643,7 +639,7 @@ def write_js(roster, unions):
         rec = {"id": p["id"], "gen": p.get("gen"), "name": p["name"],
                "sex": p.get("sex"), "line": p.get("line")}
         for k in ("alt", "born", "birthday", "died", "parent", "parent2",
-                  "ru", "note", "open"):
+                  "ru", "note"):
             if p.get(k):
                 rec[k] = p[k]
         rows.append("    " + json.dumps(rec, ensure_ascii=False))

@@ -7,7 +7,6 @@
     "parents — id ребёнка -> id родителя; чем закрыт пробел, видно в docs/QUESTIONS.md",
     "people  — правки полей человека; sex_src подписывает, откуда взят пол",
     "extra   — люди, которых в шежіре нет: перенесены с текущего сайта",
-    "open    — незакрытые места: of — из чьей ветки человек, ask — что именно неизвестно",
     "unions  — известные супружеские пары; в шежіре жён почти нет"
   ],
   "blocks": {
@@ -244,52 +243,5 @@
         "sabilash"
       ]
     }
-  ],
-  "open": {
-    "amina": {
-      "of": "izbasar"
-    },
-    "raiana": {
-      "of": "izbasar"
-    },
-    "temirlan": {
-      "of": "izbasar"
-    },
-    "symbat": {
-      "of": "izbasar"
-    },
-    "ali-2022": {
-      "of": "izbasar"
-    },
-    "ruslan": {
-      "of": "olzhabai"
-    },
-    "olesya": {
-      "of": "olzhabai"
-    },
-    "daulet": {
-      "of": "olzhabai"
-    },
-    "aset": {
-      "of": "olzhabai"
-    },
-    "dias": {
-      "of": "olzhabai"
-    },
-    "mansur-2017": {
-      "of": "olzhabai"
-    },
-    "abdrahman": {
-      "of": "niyaz"
-    },
-    "zaru": {
-      "of": "niyaz"
-    },
-    "qarazhan": {
-      "ask": "sex"
-    },
-    "er-bala": {
-      "ask": "name"
-    }
-  }
+  ]
 }

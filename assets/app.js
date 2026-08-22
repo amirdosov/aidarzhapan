@@ -57,8 +57,8 @@
     kicker:  { kk: 'Адай · Әли · АйдарЖапан', ru: 'Адай · Әли · Айдаржапан' },
     title:   { kk: 'Шежіре', ru: 'Шежіре' },
     surname: { kk: 'АйдарЖапан әулеті', ru: 'Род АйдарЖапан' },
-    lede:    { kk: '139 адам, 20 ұрпақ · Адайдан (1435) бүгінге дейін',
-               ru: '139 человек, 20 поколений · от Адая (1435) до наших дней' },
+    lede:    { kk: '139 адам, 20 ұрпақ · бүгіннен Адайға (1435) дейін',
+               ru: '139 человек, 20 поколений · от наших дней до Адая (1435)' },
 
     pickCta:   { kk: 'Сіз кімсіз?', ru: 'Кто вы?' },
     pickAgain: { kk: 'Басқа адамды таңдау', ru: 'Выбрать другого' },
@@ -116,18 +116,15 @@
     searchHint:    { kk: 'Есімнің басын жазыңыз', ru: 'Наберите начало имени' },
     nothing:       { kk: 'Ештеңе табылмады', ru: 'Ничего не найдено' },
 
-    footAuthor: { kk: 'Шежірені жинақтаған — Досов Алпамыс Орынбасарұлы',
-                  ru: 'Шежіре собрал Досов Алпамыс Орынбасарұлы' },
-    footNote:   { kk: 'Деректер «АйдарЖапан ШЕЖІРЕСІ» файлынан алынды',
-                  ru: 'Данные — из файла «АйдарЖапан ШЕЖІРЕСІ»' },
+    footAuthor: { kk: 'Сайтты жасаған — Досов Әміржан Аманкелдіұлы',
+                  ru: 'Сайт разработал Досов Амиржан Аманкелдиевич' },
 
     era:      { kk: '{r} ғасыр', ru: '{r} век' },
-    ata:      { kk: '{n}-ші ата', ru: '{n}-е колено' },
-    genLabel: { kk: '{n}-ші ұрпақ', ru: '{n}-е колено' },
-    railMe:   { kk: 'Сіз — Адайдан <b>{n}-шы ұрпақ</b>',
+    genLabel: { kk: '{o} ұрпақ', ru: '{n}-е колено' },
+    railMe:   { kk: 'Сіз — Адайдан <b>{o} ұрпақ</b>',
                 ru: 'Вы — <b>{n}-е колено</b> от Адая' },
-    railAny:  { kk: 'Шежіре тізбегі · Адайдан бүгінге',
-                ru: 'Линия шежіре · от Адая до наших дней' },
+    railAny:  { kk: 'Шежіре тізбегі · бүгіннен Адайға',
+                ru: 'Линия шежіре · от наших дней до Адая' },
     me:       { kk: 'Сіз', ru: 'Вы' },
     spouseOf: { kk: 'жұбайы {n}', ru: 'супруг(а): {n}' },
 
@@ -151,25 +148,6 @@
     shareEgo:  { kk: '{n}, мынау сіздің шежіреңіз',
                  ru: '{n}, это ваше шежіре' },
     copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
-
-    gapsHead:  { kk: 'Толықтыруға көмектесіңіз', ru: 'Помогите дополнить' },
-    gapsLede:  { kk: 'Шежіре осылай жиналған: Алпамыс Орынбасарұлы ағайыннан ' +
-                     'сұрап отырған. Мына орындар әлі бос — білетін адамға ' +
-                     'сұрақты жіберіңіз.',
-                 ru: 'Так шежіре и собиралось: Алпамыс Орынбасарұлы расспрашивал ' +
-                     'родню. Эти места пока пустые — отправьте вопрос тому, ' +
-                     'кто может знать.' },
-    gapSend:   { kk: 'Сұрақты жіберу', ru: 'Отправить вопрос' },
-    gapsFoot:  { kk: 'Шежіреде {n} ақтаңдақ бар — толықтыруға көмектесіңіз',
-                 ru: 'В шежіре {n} пустых мест — помогите дополнить' },
-    askParent: { kk: '{n} — {a} тарауынан, бірақ шежіреде кімнің баласы екені ' +
-                     'жазылмаған. Білсеңіз, жазыңызшы. {a} балалары: {k}.',
-                 ru: '{n} — из ветки {a}, но в шежіре не записано, чей это ребёнок. ' +
-                     'Если знаете — подскажите. {his} дети: {k}.' },
-    askSex:    { kk: '{n} — ұл ма, қыз ба? Шежіреде жазылмаған.',
-                 ru: '{n} — мальчик или девочка? В шежіре не записано.' },
-    askName:   { kk: '{n} — шежіреде «аты -?» деп тұр, Қазан қаласы. Есімін білесіз бе?',
-                 ru: '{n} — в шежіре записано «аты -?», Казань. Знаете имя?' },
 
     modeTree:    { kk: 'Сызба', ru: 'Схема' },
     modeList:    { kk: 'Тізім', ru: 'Список' },
@@ -220,6 +198,15 @@
     return n;
   }
   function century(y) { return y ? Math.floor((y - 1) / 100) + 1 : null; }
+
+  /* Казахский порядковый суффикс зависит от последнего слова
+     числительного: алтыншы, тоғызыншы, оныншы, жиырмасыншы — на -шы,
+     остальные на -ші. Поэтому 19-шы, но 18-ші. */
+  function ord(n) {
+    var last = n % 10;
+    return n + (last === 6 || last === 9 || last === 0 ? '-шы' : '-ші');
+  }
+  function genLabel(n) { return t('genLabel', { n: n, o: ord(n) }); }
   function years(p) {
     if (!p.born && !p.died) return '';
     if (p.born && p.died) return p.born + ' – ' + p.died;
@@ -378,7 +365,12 @@
     tape.innerHTML = '';
     var lastEra = null;
 
-    CHAIN.forEach(function (p, i) {
+    /* Лента читается сверху вниз, от себя вглубь: первым стоит тот,
+       кто открыл сайт, дальше отец, дед и так до Адая. Номер при этом
+       остаётся прежним — колено от Адая, поэтому наверху 19-е,
+       а внизу первое. */
+    CHAIN.slice().reverse().forEach(function (p, k) {
+      var i = CHAIN.length - 1 - k;
       var c = century(p.born);
       if (c && c !== lastEra) {
         lastEra = c;
@@ -410,7 +402,7 @@
 
       var meta = el('div', 'step-meta');
       meta.appendChild(el('span', 'step-tag',
-        isMe ? t('me') : t('ata', { n: i + 1 })));
+        (isMe ? t('me') + ' · ' : '') + genLabel(i + 1)));
       var y = years(p);
       if (y) meta.appendChild(el('span', 'step-years', y));
       card.appendChild(meta);
@@ -418,7 +410,6 @@
       var story = STORIES[p.id];
       if (story) {
         card.appendChild(el('p', 'step-story', esc(story[lang] || story.kk)));
-        if (story.src) card.appendChild(el('p', 'step-src', esc(story.src)));
       }
 
       step.appendChild(card);
@@ -448,7 +439,7 @@
       (p.alt ? ' <i>(' + esc(p.alt) + ')</i>' : '')));
     var sub = [];
     var y = years(p); if (y) sub.push(esc(y));
-    if (p.gen) sub.push(t('genLabel', { n: p.gen }));
+    if (p.gen) sub.push(genLabel(p.gen));
     if (withParent) {
       var who = parentPhrase(p);
       if (who) sub.push(esc(who));
@@ -938,61 +929,6 @@
   }
 
   /* ── переключение и отрисовка ───────────────────────── */
-  /* ── толықтыруға көмектесіңіз ────────────────────────
-     У тринадцати человек не записан родитель, у одного пол,
-     у одного имя. Сайт про них честно молчит — но ровно так
-     шежіре и собиралось: Алпамыс расспрашивал Төрме-апай
-     и Ережепбая. Поэтому пробел здесь не дыра, а готовый
-     вопрос, который можно переслать тому, кто помнит. */
-  var GAPS = DATA.people.filter(function (p) { return p.open; });
-
-  function gapText(p) {
-    var y = p.born ? ' ' + p.born : '';
-    if (p.open.ask === 'sex')  return t('askSex',  { n: p.name });
-    if (p.open.ask === 'name') return t('askName', { n: p.name + y });
-    var anc = BY[p.open.of];
-    if (!anc) return '';
-    var kids = (CHILDREN[p.open.of] || []).map(function (k) {
-      return BY[k].name + (BY[k].born ? ' ' + BY[k].born : '');
-    }).join(', ');
-    return t('askParent', {
-      n: p.name + y,
-      a: lang === 'kk' ? poss(anc.name) : anc.name,
-      his: anc.sex === 'f' ? 'Её' : 'Его',
-      k: kids
-    });
-  }
-
-  function renderGaps(host) {
-    if (!GAPS.length) return;
-    var head = el('div', 'group-head',
-      esc(t('gapsHead')) + ' <span>' + GAPS.length + '</span>');
-    head.id = 'gaps';
-    host.appendChild(head);
-    host.appendChild(el('p', 'gaps-lede', esc(t('gapsLede'))));
-
-    GAPS.forEach(function (p) {
-      var box = el('div', 'gap');
-      var name = el('button', 'gap-name', esc(p.name) +
-        (years(p) ? ' <span>' + esc(years(p)) + '</span>' : ''));
-      name.type = 'button';
-      name.addEventListener('click', function () { openPerson(p.id); });
-      box.appendChild(name);
-
-      var q = gapText(p);
-      box.appendChild(el('p', 'gap-q', esc(q)));
-
-      var send = el('button', 'gap-send', esc(t('gapSend')));
-      send.type = 'button';
-      send.addEventListener('click', function () {
-        var url = linkTo({ p: p.id });
-        share(url, q, q + '\n' + url);
-      });
-      box.appendChild(send);
-      host.appendChild(box);
-    });
-  }
-
   function renderTree(keep) {
     var y = window.scrollY;
     var host = document.getElementById('treeList');
@@ -1030,8 +966,6 @@
       });
     }
 
-    renderGaps(host);
-
     if (keep) window.scrollTo(0, y);
   }
 
@@ -1044,7 +978,7 @@
     Object.keys(groups).map(Number).sort(function (a, b) { return a - b; })
       .forEach(function (g) {
         var head = el('div', 'group-head',
-          g ? t('genLabel', { n: g }) + ' <span>' + groups[g].length + '</span>'
+          g ? genLabel(g) + ' <span>' + groups[g].length + '</span>'
             : (lang === 'kk' ? 'Ұрпағы белгісіз <span>' + groups[g].length + '</span>'
                              : 'Колено не установлено <span>' + groups[g].length + '</span>'));
         host.appendChild(head);
@@ -1202,7 +1136,7 @@
 
     var meta = [];
     var y = years(p); if (y) meta.push(esc(y));
-    if (p.gen) meta.push(t('genLabel', { n: p.gen }));
+    if (p.gen) meta.push(genLabel(p.gen));
     if (p.ru && p.ru.length) meta.push(esc(p.ru.join(' · ')));
     sheetBody.appendChild(el('p', 'card-meta', meta.join('  ·  ')));
 
@@ -1475,18 +1409,6 @@
     search(this.value, document.getElementById('searchList'), true);
   });
   pickInput.addEventListener('input', function () { renderPicker(this.value); });
-  /* Пробелы должны попадаться на глаза, а не лежать в конце «Ағаш»:
-     строку про них видно с любого экрана. */
-  document.getElementById('gapsLink').addEventListener('click', function () {
-    setView('tree');
-    setTimeout(function () {
-      var node = document.getElementById('gaps');
-      if (!node) return;
-      window.scrollTo({ top: window.scrollY + node.getBoundingClientRect().top - 80,
-                        behavior: 'smooth' });
-    }, 60);
-  });
-
   document.getElementById('meBtn').addEventListener('click', openPicker);
   document.getElementById('heroPick').addEventListener('click', openPicker);
 
@@ -1551,9 +1473,6 @@
     document.getElementById('searchInput').placeholder = t('searchHint');
     pickInput.placeholder = t('searchHint');
 
-    document.getElementById('gapsLink').textContent =
-      t('gapsFoot', { n: GAPS.length });
-
     var meLabel = document.getElementById('meLabel');
     meLabel.textContent = !ego ? t('pickCta')
       : BY[ego].name + (egoVia ? ' · ' + t('viaTag') : '');
@@ -1565,7 +1484,7 @@
 
     renderTape();
     document.getElementById('railMain').innerHTML =
-      ego ? t('railMe', { n: CHAIN.length }) : t('railAny');
+      ego ? t('railMe', { n: CHAIN.length, o: ord(CHAIN.length) }) : t('railAny');
 
     if (view === 'kin') renderKin();
     if (view === 'tree') renderTree();
