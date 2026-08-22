@@ -27,6 +27,30 @@
   var egoVia = localStorage.getItem('az-ego-via') || null;   // выбран как супруг
   if (ego && !BY[ego]) { ego = null; egoVia = null; }
 
+  /* ── адрес страницы ─────────────────────────────────
+     Сайт расходится по родне ссылками в WhatsApp, поэтому
+     понимает два адреса:
+       ?p=qoshqar   — открыть карточку человека
+       ?me=alpamys  — открыть сайт уже настроенным на человека,
+                      чтобы получатель сразу видел родство от себя
+     Разобрали — и сразу чистим адрес: дальше историей
+     распоряжается сам сайт, слоями. */
+  var Q      = new URLSearchParams(location.search);
+  var linkP  = Q.get('p');
+  var linkMe = Q.get('me');
+  if (linkP && !BY[linkP]) linkP = null;
+  if (linkMe && BY[linkMe]) {
+    ego    = linkMe;
+    egoVia = Q.get('via') === '1' ? linkMe : null;
+    localStorage.setItem('az-ego', ego);
+    if (egoVia) localStorage.setItem('az-ego-via', egoVia);
+    else localStorage.removeItem('az-ego-via');
+    localStorage.setItem('az-asked', '1');
+  } else {
+    linkMe = null;
+  }
+  if (location.search) history.replaceState(null, '', location.pathname);
+
   /* ── тексты интерфейса ──────────────────────────────── */
   var T = {
     brand:   { kk: 'АйдарЖапан', ru: 'АйдарЖапан' },
@@ -90,7 +114,18 @@
     setMe:    { kk: 'Бұл менмін', ru: 'Это я' },
     noRel:    { kk: 'Өзіңізді таңдаңыз — туыстық шығады',
                 ru: 'Выберите себя — появится родство' },
-    pathLabel:{ kk: 'Туыстық жолы', ru: 'Путь родства' }
+    pathLabel:{ kk: 'Туыстық жолы', ru: 'Путь родства' },
+
+    share:     { kk: 'Бөлісу', ru: 'Поделиться' },
+    shareMe:   { kk: '{n} үшін сілтеме — ашқан бойда өзі таңдалып тұрады',
+                 ru: 'Ссылка для {n} — откроется уже выбранным' },
+    shareCard: { kk: '{n} — АйдарЖапан шежіресі',
+                 ru: '{n} — шежіре АйдарЖапан' },
+    shareEgo:  { kk: '{n}, мынау сіздің шежіреңіз',
+                 ru: '{n}, это ваше шежіре' },
+    copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
+    openedAs:  { kk: 'Сайт {n} ретінде ашылды · жоғарыдан ауыстыруға болады',
+                 ru: 'Сайт открыт как {n} · поменять можно в шапке' }
   };
 
   function t(key, vars) {
@@ -130,6 +165,53 @@
       .replace(/[hһ]/g, 'х').replace(/[іи]/g, 'и').replace(/[йи]/g, 'и');
   }
 
+  /* ── ссылки и «поделиться» ──────────────────────────── */
+  function linkTo(params) {
+    var q = Object.keys(params).map(function (k) {
+      return k + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    return location.origin + location.pathname + (q ? '?' + q : '');
+  }
+
+  var toastNode = document.getElementById('toast');
+  var toastTimer = null;
+  function toast(msg) {
+    clearTimeout(toastTimer);
+    toastNode.textContent = msg;
+    toastNode.hidden = false;
+    void toastNode.offsetWidth;
+    toastNode.classList.add('is-on');
+    toastTimer = setTimeout(function () {
+      toastNode.classList.remove('is-on');
+      toastTimer = setTimeout(function () { toastNode.hidden = true; }, 320);
+    }, 3000);
+  }
+
+  /* Телефон делится сам, на большом экране кладём в буфер. */
+  function share(url, text) {
+    if (navigator.share) {
+      navigator.share({ title: t('brand'), text: text, url: url })
+        .catch(function () {});
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        function () { toast(t('copied')); },
+        function () { copyFallback(url); });
+      return;
+    }
+    copyFallback(url);
+  }
+  function copyFallback(s) {
+    var box = el('textarea');
+    box.value = s;
+    box.style.cssText = 'position:fixed; top:0; left:0; opacity:0';
+    document.body.appendChild(box);
+    box.select();
+    try { document.execCommand('copy'); toast(t('copied')); } catch (e) {}
+    document.body.removeChild(box);
+  }
+
   var CHILDREN = {};
   DATA.people.forEach(function (p) {
     [p.parent, p.parent2].forEach(function (par) {
@@ -140,6 +222,22 @@
     CHILDREN[k] = CHILDREN[k].filter(function (v, i, a) { return a.indexOf(v) === i; })
       .sort(function (a, b) { return (BY[a].born || 9999) - (BY[b].born || 9999); });
   });
+
+  /* Кому есть смысл послать ссылку «это вы».
+     «Жив» в шежіре не записано, считаем по годам: свои, а если их
+     нет — родителей и супруга. Осталось только колено: живые
+     начинаются с шестнадцатого, у пришедших со стороны его нет. */
+  function maybeAlive(p) {
+    if (p.died) return false;
+    if (p.born) return p.born >= 1930;
+    var near = [p.parent, p.parent2].concat(
+      (KIN.mates[p.id] || []).map(function (m) { return m.id; }));
+    for (var i = 0; i < near.length; i++) {
+      var k = BY[near[i]];
+      if (k && (k.died || (k.born && k.born < 1900))) return false;
+    }
+    return (p.gen || 99) >= 16;
+  }
 
   /* Родство целевого человека к выбранному. */
   function relOf(id) {
@@ -407,9 +505,27 @@
       b.addEventListener('click', function () { closeSheet(); setEgo(id, null); });
       actions.appendChild(b);
     }
+    var sh = el('button', 'card-act', esc(t('share')));
+    sh.type = 'button';
+    sh.addEventListener('click', function () {
+      share(linkTo({ p: id }), t('shareCard', { n: p.name }));
+    });
+    actions.appendChild(sh);
     sheetBody.appendChild(actions);
 
-    openLayer(sheet);
+    /* Вторая ссылка — «это вы»: получатель откроет сайт уже
+       выбранным и увидит родство от себя, ничего не нажимая.
+       Предлагаем её тем, кто, судя по записям, жив. */
+    if (id !== ego && maybeAlive(p)) {
+      var shMe = el('button', 'card-share-me', esc(t('shareMe', { n: p.name })));
+      shMe.type = 'button';
+      shMe.addEventListener('click', function () {
+        share(linkTo({ me: id }), t('shareEgo', { n: p.name }));
+      });
+      sheetBody.appendChild(shMe);
+    }
+
+    openLayer(sheet, '?p=' + encodeURIComponent(id));
   }
 
   /* ── «Сіз кімсіз?» ──────────────────────────────────── */
@@ -462,7 +578,7 @@
     var skip = document.getElementById('pickSkip');
     skip.textContent = t('pickSkip');
     renderPicker(pickInput.value);
-    openLayer(picker);
+    openLayer(picker, location.pathname);
     setTimeout(function () { pickInput.focus(); }, 120);
   }
 
@@ -499,16 +615,20 @@
   var pushed = false;
   var navClose = document.getElementById('navClose');
 
-  function openLayer(node) {
+  function openLayer(node, url) {
     if (layer && layer !== node) layer.hidden = true;
     layer = node;
     node.hidden = false;
     document.body.classList.add('locked');
     navClose.hidden = false;
     document.querySelectorAll('.nav-btn').forEach(function (b) { b.hidden = true; });
+    /* Карточка живёт по своему адресу — его можно скопировать
+       прямо из строки браузера и отправить как есть. */
     if (!pushed) {
-      history.pushState({ layer: true }, '');
+      history.pushState({ layer: true }, '', url || null);
       pushed = true;
+    } else {
+      history.replaceState({ layer: true }, '', url || location.pathname);
     }
   }
   /* Прячем сразу и только потом трогаем историю. Наоборот было
@@ -517,6 +637,7 @@
   function closeLayer() {
     hideLayer();
     if (pushed) { pushed = false; history.back(); }
+    else if (location.search) history.replaceState(null, '', location.pathname);
   }
   function hideLayer() {
     if (layer) layer.hidden = true;
@@ -527,7 +648,14 @@
   }
   function closeSheet() { closeLayer(); }
 
-  window.addEventListener('popstate', function () { pushed = false; hideLayer(); });
+  /* «Вперёд» возвращает на адрес карточки — открываем её снова,
+     не заводя новой записи в истории. */
+  window.addEventListener('popstate', function () {
+    var back = new URLSearchParams(location.search).get('p');
+    if (back && BY[back]) { pushed = true; openPerson(back); return; }
+    pushed = false;
+    hideLayer();
+  });
   document.querySelectorAll('[data-close]').forEach(function (n) {
     n.addEventListener('click', closeLayer);
   });
@@ -672,8 +800,12 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
 
-  /* впервые зашёл — сразу спрашиваем, но не запираем */
-  if (!ego && !localStorage.getItem('az-asked')) {
+  /* Пришёл по ссылке — показываем то, ради чего её прислали.
+     Иначе, если человек здесь впервые, спрашиваем, кто он. */
+  if (linkMe) toast(t('openedAs', { n: BY[linkMe].name }));
+  if (linkP) {
+    openPerson(linkP);
+  } else if (!ego && !localStorage.getItem('az-asked')) {
     localStorage.setItem('az-asked', '1');
     setTimeout(openPicker, 700);
   }

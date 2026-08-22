@@ -609,3 +609,36 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   40%{box-shadow:0 0 0 10px color-mix(in srgb, var(--gold) 0%, transparent)}
   100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 0%, transparent)}
 }
+
+/* ── ссылки: «поделиться» и всплывающая подсказка ───────── */
+/* Вторая ссылка в карточке — длинная фраза, а не команда:
+   человеку надо понять, чем она отличается от первой. */
+.card-share-me{
+  appearance:none; cursor:pointer; display:block; width:100%;
+  margin:8px 0 2px; padding:11px 14px;
+  border:1px dashed var(--line-soft); border-radius:14px;
+  background:transparent; color:var(--muted);
+  font-family:var(--f-body); font-size:12.5px; line-height:1.45;
+  text-align:center;
+  transition:border-color .25s var(--ease), color .25s var(--ease);
+}
+.card-share-me:hover{border-color:var(--gold); color:var(--gold)}
+
+/* Подсказка встаёт сверху, под шапкой: снизу она накрывала бы
+   нижние кнопки карточки — а речь как раз про них. */
+.toast{
+  position:fixed; left:50%; top:calc(var(--bar-h) + 10px); z-index:90;
+  transform:translate(-50%,-14px); opacity:0; pointer-events:none;
+  max-width:min(88vw,420px); text-align:center;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--panel-2); box-shadow:var(--shadow);
+  color:var(--ink); font-family:var(--f-body); font-size:13px;
+  padding:11px 18px;
+  transition:opacity .3s var(--ease), transform .3s var(--spring);
+}
+.toast.is-on{opacity:1; transform:translate(-50%,0)}
+
+/* Когда открыта карточка, сверху стоит имя человека — там подсказке
+   не место, уводим её вниз, к кнопкам. */
+body.locked .toast{top:auto; bottom:92px; transform:translate(-50%,14px)}
+body.locked .toast.is-on{transform:translate(-50%,0)}
