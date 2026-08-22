@@ -47,6 +47,9 @@
     hintNone:  { kk: 'Таңдасаңыз, туыстық есептеледі',
                  ru: 'Выберите — и родство посчитается' },
     hintVia:   { kk: '{n} арқылы есептелуде', ru: 'считается через {n}' },
+    iamSpouse: { kk: 'жұбайымын', ru: 'я супруг(а)' },
+    viaTag:    { kk: 'жұбайы', ru: 'супруг(а)' },
+    forSpouse: { kk: '{n} үшін:', ru: 'для {n}:' },
 
     navTape:   { kk: 'Тізбек', ru: 'Линия' },
     navTree:   { kk: 'Ағаш',   ru: 'Древо' },
@@ -350,6 +353,10 @@
     if (ego && id !== ego) {
       var r = relOf(id);
       var box = el('div', 'rel' + (r && r.kind === 'unknown' ? ' is-gap' : ''));
+      if (egoVia) {
+        box.appendChild(el('p', 'rel-via',
+          esc(t('forSpouse', { n: BY[egoVia].name }))));
+      }
       box.appendChild(el('p', 'rel-term', esc(relText(r))));
       if (r && r.term && r.path) {
         box.appendChild(el('p', 'rel-path', esc(r.path[lang] || r.path.kk)));
@@ -410,11 +417,13 @@
   var pickInput = document.getElementById('pickInput');
 
   function pickerRow(p) {
+    var wrap = el('div', 'pick-row');
+
     var row = el('button', 'row');
     row.type = 'button';
     row.addEventListener('click', function () { setEgo(p.id, null); closeLayer(); });
-    var av = el('span', 'row-av', esc(p.name.charAt(0)));
-    row.appendChild(av);
+    row.appendChild(el('span', 'row-av', esc(p.name.charAt(0))));
+
     var mid = el('span', 'row-mid');
     mid.appendChild(el('span', 'row-name', esc(p.name)));
     var sub = [];
@@ -423,7 +432,16 @@
       (lang === 'kk' ? 'дың баласы' : ' — отец'));
     mid.appendChild(el('span', 'row-sub', sub.join(' · ')));
     row.appendChild(mid);
-    return row;
+    wrap.appendChild(row);
+
+    /* Жён и мужей в шежіре почти нет. Кто себя не нашёл — отмечается
+       супругом, и родство честно считается от его половины. */
+    var alt = el('button', 'pick-alt', esc(t('iamSpouse')));
+    alt.type = 'button';
+    alt.addEventListener('click', function () { setEgo(p.id, p.id); closeLayer(); });
+    wrap.appendChild(alt);
+
+    return wrap;
   }
 
   function renderPicker(q) {
@@ -441,6 +459,8 @@
   }
 
   function openPicker() {
+    var skip = document.getElementById('pickSkip');
+    skip.textContent = t('pickSkip');
     renderPicker(pickInput.value);
     openLayer(picker);
     setTimeout(function () { pickInput.focus(); }, 120);
@@ -582,7 +602,8 @@
     pickInput.placeholder = t('searchHint');
 
     var meLabel = document.getElementById('meLabel');
-    meLabel.textContent = ego ? BY[ego].name : t('pickCta');
+    meLabel.textContent = !ego ? t('pickCta')
+      : BY[ego].name + (egoVia ? ' · ' + t('viaTag') : '');
     document.getElementById('meBtn').classList.toggle('is-set', !!ego);
     document.getElementById('heroPick').textContent =
       ego ? t('pickAgain') : t('pickCta');
