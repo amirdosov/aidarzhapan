@@ -6,35 +6,234 @@
     "blocks  — ячейка Лист1 -> id человека, если автоматика её не опознала",
     "parents — id ребёнка -> id родителя",
     "people  — правки полей человека; sex_src подписывает, откуда взят пол",
-    "extra   — люди, которых в шежіре нет (данные текущего сайта)"
+    "extra   — люди, которых в шежіре нет: перенесены с текущего сайта",
+    "unions  — известные супружеские пары; в шежіре жён почти нет"
   ],
-
   "blocks": {
     "Q68": "alpamys",
     "S44": "inayat"
   },
-
   "parents": {
-    "selina": "aigul"
+    "selina": "aigul",
+    "albina": "bairam"
   },
-
   "people": {
-    "zhangaqbai": { "sex": "m", "sex_src": "по имени" },
-    "otemurat":   { "sex": "m", "sex_src": "по имени" },
-    "nauryzbai":  { "sex": "m", "sex_src": "по имени" },
-    "abdrahman":  { "sex": "m", "sex_src": "по имени" },
-    "matzhan":    { "sex": "m", "sex_src": "по имени" },
-    "ermek":      { "sex": "m", "sex_src": "по имени" },
-    "aibek":      { "sex": "m", "sex_src": "по имени" },
-    "amantai":    { "sex": "m", "sex_src": "по имени" },
-    "eset":       { "sex": "m", "sex_src": "по имени" },
-    "batyr":      { "sex": "m", "sex_src": "по имени" },
-    "dias":       { "sex": "m", "sex_src": "по имени" },
-    "zhuldyz":    { "sex": "f", "sex_src": "по имени" },
-    "baian":      { "sex": "f", "sex_src": "по имени" },
-    "adelya":     { "sex": "f", "sex_src": "по имени" },
-    "zaru":       { "sex": "f", "sex_src": "по имени" }
+    "zhangaqbai": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "otemurat": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "nauryzbai": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "abdrahman": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "matzhan": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "ermek": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "aibek": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "amantai": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "eset": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "batyr": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "dias": {
+      "sex": "m",
+      "sex_src": "по имени"
+    },
+    "zhuldyz": {
+      "sex": "f",
+      "sex_src": "по имени"
+    },
+    "baian": {
+      "sex": "f",
+      "sex_src": "по имени"
+    },
+    "adelya": {
+      "sex": "f",
+      "sex_src": "по имени"
+    },
+    "zaru": {
+      "sex": "f",
+      "sex_src": "по имени"
+    },
+    "amankeldi": {
+      "birthday": "1961-04-29"
+    },
+    "selina": {
+      "born": 2022
+    }
   },
-
-  "extra": []
+  "extra": [
+    {
+      "id": "kunzira",
+      "name": "Күнзира",
+      "sex": "f",
+      "line": "in",
+      "born": 1964,
+      "birthday": "1964-01-15",
+      "ru": [
+        "Таз",
+        "Жантай"
+      ],
+      "note": "Досова Күнзира Айсанқызы"
+    },
+    {
+      "id": "albina",
+      "name": "Альбина",
+      "sex": "f",
+      "line": "in",
+      "born": 2002,
+      "birthday": "2002-01-02",
+      "ru": [
+        "Әлім",
+        "Қабақ",
+        "Шағыр"
+      ]
+    },
+    {
+      "id": "bairam",
+      "name": "Байрам",
+      "sex": "m",
+      "line": "out",
+      "ru": [
+        "Әлім",
+        "Қабақ",
+        "Шағыр"
+      ],
+      "note": "әкесі Альбинаның"
+    },
+    {
+      "id": "qansulu",
+      "name": "Қансұлу",
+      "sex": "f",
+      "line": "out",
+      "note": "шешесі Альбинаның"
+    },
+    {
+      "id": "maksim",
+      "name": "Максим",
+      "sex": "m",
+      "line": "out",
+      "note": "Айгүлмен ажырасқан"
+    },
+    {
+      "id": "symbat-dos",
+      "name": "Сымбат",
+      "sex": "f",
+      "line": "in",
+      "note": "Дос атамыздың жұбайы"
+    },
+    {
+      "id": "amina-qosbala",
+      "name": "Әмина",
+      "sex": "f",
+      "line": "in",
+      "note": "Қосбаланың жұбайы"
+    },
+    {
+      "id": "maqpal",
+      "name": "Мақпал",
+      "sex": "f",
+      "line": "in",
+      "note": "Мұңалдың бәйбішесі"
+    },
+    {
+      "id": "toqbike",
+      "name": "Тоқбике",
+      "sex": "f",
+      "line": "in",
+      "note": "Мұңалдың тоқалы"
+    },
+    {
+      "id": "sabilash",
+      "name": "Сәбилаш",
+      "sex": "f",
+      "line": "in",
+      "born": 1934,
+      "ru": [
+        "Құдайке"
+      ],
+      "note": "«Шешеміз Сәбилаш 1934ж осы рудан тараған» — Лист2, L18"
+    }
+  ],
+  "unions": [
+    {
+      "partners": [
+        "amankeldi",
+        "kunzira"
+      ]
+    },
+    {
+      "partners": [
+        "amirzhan",
+        "albina"
+      ]
+    },
+    {
+      "partners": [
+        "aigul",
+        "maksim"
+      ],
+      "status": "divorced"
+    },
+    {
+      "partners": [
+        "bairam",
+        "qansulu"
+      ]
+    },
+    {
+      "partners": [
+        "dos",
+        "symbat-dos"
+      ]
+    },
+    {
+      "partners": [
+        "qosbala",
+        "amina-qosbala"
+      ]
+    },
+    {
+      "partners": [
+        "munal",
+        "maqpal"
+      ]
+    },
+    {
+      "partners": [
+        "munal",
+        "toqbike"
+      ]
+    },
+    {
+      "partners": [
+        "orynbasar",
+        "sabilash"
+      ],
+      "src": "предположение: Алпамыс подписал её «шешеміз» — подтвердить"
+    }
+  ]
 }

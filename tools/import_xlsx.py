@@ -478,8 +478,9 @@ def main():
             by_id[child]["src"] = "manual.json"
 
     compute_gen(roster, by_id)
-    write_report(roster, blocks, by_id, added, manual)
-    write_js(roster)
+    unions = manual.get("unions", [])
+    write_report(roster, blocks, by_id, added, unions)
+    write_js(roster, unions)
     print("людей: %d | со связью: %d | колено посчитано: %d | отчёт: %s" % (
         len(roster),
         sum(1 for p in roster if p.get("parent")),
@@ -501,7 +502,7 @@ def hint(p, by_coord):
     return "выше стоит %s (%s)" % (near["person"]["name"], near["coord"])
 
 
-def write_report(roster, blocks, by_id, added, manual):
+def write_report(roster, blocks, by_id, added, unions):
     L = ["Отчёт импорта. Сверять глазами, а не на веру.",
          "Пересобрать: python tools/import_xlsx.py", ""]
 
@@ -570,10 +571,22 @@ def write_report(roster, blocks, by_id, added, manual):
             "-> " + b["person"]["name"] if b.get("person") else "НЕ ОПОЗНАН"))
     L.append("")
 
-    bad = [p for p in roster if p.get("parent") and p["parent"] not in by_id]
+    bad = ["%s -> %s" % (p["id"], p["parent"]) for p in roster
+           if p.get("parent") and p["parent"] not in by_id]
+    bad += [" + ".join(u["partners"]) for u in unions
+            if any(x not in by_id for x in u["partners"])]
     L.append("ССЫЛКИ В НИКУДА: %d" % len(bad))
-    for p in bad:
-        L.append("  %s -> %s" % (p["id"], p["parent"]))
+    L += ["  " + x for x in bad]
+    L.append("")
+
+    L.append("ПАРЫ: %d" % len(unions))
+    for u in unions:
+        who = " + ".join(by_id[x]["name"] if x in by_id else "?" + x
+                         for x in u["partners"])
+        mark = " — " + u["src"] if u.get("src") else ""
+        if u.get("status") == "divorced":
+            mark = " (в разводе)" + mark
+        L.append("  %s%s" % (who, mark))
     L.append("")
 
     L.append("ПРИМЕЧАНИЯ ИЗ ЯЧЕЕК")
@@ -592,22 +605,29 @@ def write_report(roster, blocks, by_id, added, manual):
     REPORT.write_text("\n".join(L) + "\n", "utf-8")
 
 
-def write_js(roster):
+def write_js(roster, unions):
     OUT_JS.parent.mkdir(exist_ok=True)
     rows = []
     for p in sorted(roster, key=lambda x: (x.get("gen") or 99, x.get("born") or 0)):
         rec = {"id": p["id"], "gen": p.get("gen"), "name": p["name"],
                "sex": p.get("sex"), "line": p.get("line")}
-        for k in ("alt", "born", "died", "parent", "note"):
+        for k in ("alt", "born", "birthday", "died", "parent", "ru", "note"):
             if p.get(k):
                 rec[k] = p[k]
         rows.append("    " + json.dumps(rec, ensure_ascii=False))
+    pairs = ",\n".join("    " + json.dumps(u, ensure_ascii=False)
+                       for u in unions)
     OUT_JS.write_text(
         "/* Собрано из source/АйдарЖапан ШЕЖІРЕСІ-2.xlsx.\n"
         "   Не править руками: правки — в tools/manual.json,\n"
         "   потом python tools/import_xlsx.py */\n\n"
-        "window.AIDARZHAPAN = {\n  people: [\n"
-        + ",\n".join(rows) + "\n  ]\n};\n", "utf-8")
+        "window.AIDARZHAPAN = {\n"
+        "  /* line: main — прямая линия, rod — род, zhien — жиен,\n"
+        "     out — за пределами рода, in — вошедшие в род жёны */\n"
+        "  people: [\n" + ",\n".join(rows) + "\n  ],\n\n"
+        "  /* Известные супружеские пары. Шежіре — мужская линия,\n"
+        "     поэтому жён мало и все они названы поимённо. */\n"
+        "  unions: [\n" + pairs + "\n  ]\n};\n", "utf-8")
 
 
 if __name__ == "__main__":

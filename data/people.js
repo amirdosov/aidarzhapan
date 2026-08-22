@@ -3,6 +3,8 @@
    потом python tools/import_xlsx.py */
 
 window.AIDARZHAPAN = {
+  /* line: main — прямая линия, rod — род, zhien — жиен,
+     out — за пределами рода, in — вошедшие в род жёны */
   people: [
     {"id": "adai", "gen": 1, "name": "Адай", "sex": "m", "line": "main", "born": 1435, "died": 1549},
     {"id": "aitniyaz", "gen": 2, "name": "Айтнияз", "sex": "m", "line": "main", "parent": "adai"},
@@ -83,7 +85,7 @@ window.AIDARZHAPAN = {
     {"id": "aizada", "gen": 17, "name": "Айзада", "sex": "f", "line": "out", "born": 1969, "parent": "olzhabai"},
     {"id": "amantai", "gen": 18, "name": "Амантай", "sex": "m", "line": "rod", "parent": "qarazhan"},
     {"id": "aitmaganbet", "gen": 18, "name": "Айтмағанбет", "sex": "m", "line": "rod", "born": 1959, "parent": "orynbasar"},
-    {"id": "amankeldi", "gen": 18, "name": "Аманкелді", "sex": "m", "line": "rod", "born": 1961, "parent": "orynbasar"},
+    {"id": "amankeldi", "gen": 18, "name": "Аманкелді", "sex": "m", "line": "rod", "born": 1961, "birthday": "1961-04-29", "parent": "orynbasar"},
     {"id": "gulaiim", "gen": 18, "name": "Гүләйім", "sex": "f", "line": "out", "born": 1962, "parent": "orynbasar"},
     {"id": "alpamys", "gen": 18, "name": "Алпамыс", "sex": "m", "line": "main", "born": 1963, "parent": "orynbasar"},
     {"id": "nurzhan", "gen": 18, "name": "Нұржан", "sex": "m", "line": "rod", "born": 1965, "parent": "orynbasar"},
@@ -122,16 +124,40 @@ window.AIDARZHAPAN = {
     {"id": "aibek", "gen": null, "name": "Айбек", "sex": "m", "line": "rod", "parent": "abdrahman"},
     {"id": "eset", "gen": null, "name": "Есет", "sex": "m", "line": "rod"},
     {"id": "batyr", "gen": null, "name": "Батыр", "sex": "m", "line": "rod"},
+    {"id": "bairam", "gen": null, "name": "Байрам", "sex": "m", "line": "out", "ru": ["Әлім", "Қабақ", "Шағыр"], "note": "әкесі Альбинаның"},
+    {"id": "qansulu", "gen": null, "name": "Қансұлу", "sex": "f", "line": "out", "note": "шешесі Альбинаның"},
+    {"id": "maksim", "gen": null, "name": "Максим", "sex": "m", "line": "out", "note": "Айгүлмен ажырасқан"},
+    {"id": "symbat-dos", "gen": null, "name": "Сымбат", "sex": "f", "line": "in", "note": "Дос атамыздың жұбайы"},
+    {"id": "amina-qosbala", "gen": null, "name": "Әмина", "sex": "f", "line": "in", "note": "Қосбаланың жұбайы"},
+    {"id": "maqpal", "gen": null, "name": "Мақпал", "sex": "f", "line": "in", "note": "Мұңалдың бәйбішесі"},
+    {"id": "toqbike", "gen": null, "name": "Тоқбике", "sex": "f", "line": "in", "note": "Мұңалдың тоқалы"},
+    {"id": "sabilash", "gen": null, "name": "Сәбилаш", "sex": "f", "line": "in", "born": 1934, "ru": ["Құдайке"], "note": "«Шешеміз Сәбилаш 1934ж осы рудан тараған» — Лист2, L18"},
+    {"id": "kunzira", "gen": null, "name": "Күнзира", "sex": "f", "line": "in", "born": 1964, "birthday": "1964-01-15", "ru": ["Таз", "Жантай"], "note": "Досова Күнзира Айсанқызы"},
     {"id": "ruslan", "gen": null, "name": "Руслан", "sex": "m", "line": "rod", "born": 1984},
     {"id": "olesya", "gen": null, "name": "Олеся", "sex": "f", "line": "out", "born": 1987},
     {"id": "daulet", "gen": null, "name": "Даулет", "sex": "m", "line": "rod", "born": 1989},
     {"id": "aset", "gen": null, "name": "Асет", "sex": "m", "line": "rod", "born": 1990},
     {"id": "amina", "gen": null, "name": "Амина", "sex": "f", "line": "out", "born": 1998},
+    {"id": "albina", "gen": null, "name": "Альбина", "sex": "f", "line": "in", "born": 2002, "birthday": "2002-01-02", "parent": "bairam", "ru": ["Әлім", "Қабақ", "Шағыр"]},
     {"id": "dias", "gen": null, "name": "Диас", "sex": "m", "line": "rod", "born": 2008},
     {"id": "raiana", "gen": null, "name": "Райана", "sex": "f", "line": "out", "born": 2014},
     {"id": "temirlan", "gen": null, "name": "Темирлан", "sex": "m", "line": "rod", "born": 2015},
     {"id": "symbat", "gen": null, "name": "Сымбат", "sex": "f", "line": "out", "born": 2016},
     {"id": "mansur-2017", "gen": null, "name": "Мансур", "sex": "m", "line": "rod", "born": 2017},
     {"id": "ali-2022", "gen": null, "name": "Али", "sex": "m", "line": "rod", "born": 2022}
+  ],
+
+  /* Известные супружеские пары. Шежіре — мужская линия,
+     поэтому жён мало и все они названы поимённо. */
+  unions: [
+    {"partners": ["amankeldi", "kunzira"]},
+    {"partners": ["amirzhan", "albina"]},
+    {"partners": ["aigul", "maksim"], "status": "divorced"},
+    {"partners": ["bairam", "qansulu"]},
+    {"partners": ["dos", "symbat-dos"]},
+    {"partners": ["qosbala", "amina-qosbala"]},
+    {"partners": ["munal", "maqpal"]},
+    {"partners": ["munal", "toqbike"]},
+    {"partners": ["orynbasar", "sabilash"], "src": "предположение: Алпамыс подписал её «шешеміз» — подтвердить"}
   ]
 };

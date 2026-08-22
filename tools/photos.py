@@ -104,7 +104,7 @@ def main():
         u"/* Файл создаётся автоматически: python tools/photos.py",
         u"   Руками не правим — правки затрутся при следующем запуске.",
         u"   Порядок фотографий = порядок имён файлов, первое становится аватаром. */",
-        u"window.SHEZHIRE_PHOTOS = {",
+        u"window.AIDARZHAPAN_PHOTOS = {",
     ]
     for who in sorted(data):
         lines.append(u'  "%s": [' % who)
