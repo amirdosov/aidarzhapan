@@ -404,7 +404,7 @@
     if (id !== ego) {
       var b = el('button', 'card-act', esc(t('setMe')));
       b.type = 'button';
-      b.addEventListener('click', function () { setEgo(id, null); closeSheet(); });
+      b.addEventListener('click', function () { closeSheet(); setEgo(id, null); });
       actions.appendChild(b);
     }
     sheetBody.appendChild(actions);
@@ -421,7 +421,7 @@
 
     var row = el('button', 'row');
     row.type = 'button';
-    row.addEventListener('click', function () { setEgo(p.id, null); closeLayer(); });
+    row.addEventListener('click', function () { closeLayer(); setEgo(p.id, null); });
     row.appendChild(el('span', 'row-av', esc(p.name.charAt(0))));
 
     var mid = el('span', 'row-mid');
@@ -438,7 +438,7 @@
        супругом, и родство честно считается от его половины. */
     var alt = el('button', 'pick-alt', esc(t('iamSpouse')));
     alt.type = 'button';
-    alt.addEventListener('click', function () { setEgo(p.id, p.id); closeLayer(); });
+    alt.addEventListener('click', function () { closeLayer(); setEgo(p.id, p.id); });
     wrap.appendChild(alt);
 
     return wrap;
@@ -472,10 +472,31 @@
     if (via) localStorage.setItem('az-ego-via', via);
     else localStorage.removeItem('az-ego-via');
     paint();
+    showMeInTape();
+  }
+
+  /* Выбор себя должен быть виден. Иначе человек нажал — и, если он
+     стоит наверху страницы, на экране будто ничего не произошло. */
+  function showMeInTape() {
+    if (view !== 'tape') { setView('tape'); }
+    var mine = tape.querySelector('.step.is-me');
+    if (!mine) return;
+    tape.querySelectorAll('.step').forEach(function (s) { s.classList.add('in'); });
+    var top = window.scrollY + mine.getBoundingClientRect().top -
+              window.innerHeight * 0.42;
+    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    mine.classList.remove('just-set');
+    void mine.offsetWidth;
+    mine.classList.add('just-set');
   }
 
   /* ── слои и системная «назад» ───────────────────────── */
   var layer = null;
+  /* Своя запись в истории — ровно одна, и мы про неё знаем.
+     Раньше признаком служил history.state, но он меняется не сразу:
+     после нескольких открытий-закрытий back() начинал листать
+     настоящую историю браузера и уводил со страницы. */
+  var pushed = false;
   var navClose = document.getElementById('navClose');
 
   function openLayer(node) {
@@ -485,13 +506,17 @@
     document.body.classList.add('locked');
     navClose.hidden = false;
     document.querySelectorAll('.nav-btn').forEach(function (b) { b.hidden = true; });
-    if (!history.state || !history.state.layer) {
+    if (!pushed) {
       history.pushState({ layer: true }, '');
+      pushed = true;
     }
   }
+  /* Прячем сразу и только потом трогаем историю. Наоборот было
+     хрупко: если перерисовка спотыкалась, popstate не приходил
+     и слой оставался висеть на экране. */
   function closeLayer() {
-    if (history.state && history.state.layer) history.back();
-    else hideLayer();
+    hideLayer();
+    if (pushed) { pushed = false; history.back(); }
   }
   function hideLayer() {
     if (layer) layer.hidden = true;
@@ -502,7 +527,7 @@
   }
   function closeSheet() { closeLayer(); }
 
-  window.addEventListener('popstate', function () { hideLayer(); });
+  window.addEventListener('popstate', function () { pushed = false; hideLayer(); });
   document.querySelectorAll('[data-close]').forEach(function (n) {
     n.addEventListener('click', closeLayer);
   });

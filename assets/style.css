@@ -596,3 +596,11 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   margin:0 0 5px; font-size:10.5px; font-weight:600; letter-spacing:.18em;
   text-transform:uppercase; color:var(--gold-dim);
 }
+
+/* короткая вспышка на своей карточке после выбора «это я» */
+.step.just-set .step-card{animation:justSet 1.6s var(--ease)}
+@keyframes justSet{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 55%, transparent)}
+  40%{box-shadow:0 0 0 10px color-mix(in srgb, var(--gold) 0%, transparent)}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 0%, transparent)}
+}
