@@ -80,6 +80,7 @@
     navTree:   { kk: 'Ағаш',   ru: 'Древо' },
     navSearch: { kk: 'Іздеу',  ru: 'Поиск' },
     close:     { kk: 'ЖАБУ',   ru: 'ЗАКРЫТЬ' },
+    back:      { kk: 'Артқа',  ru: 'Назад' },
 
     treeEyebrow: { kk: 'Ағаш', ru: 'Древо' },
     treeTitle:   { kk: 'Барлығы 139 адам', ru: 'Все 139 человек' },
@@ -1118,16 +1119,40 @@
     return t(par && par.sex === 'f' ? 'mother' : 'father');
   }
 
-  function openPerson(id) {
+  /* Из карточки уходят вглубь: отец, его отец, брат брата. Чтобы
+     не терять дорогу назад, помним, откуда пришли, — и кнопка
+     в углу карточки ведёт на шаг обратно, а не сразу наружу. */
+  var cardStack = [];
+  var cardNow = null;
+
+  function openPerson(id, back) {
     var p = BY[id];
     if (!p) return;
+    if (!back && cardNow && cardNow !== id) cardStack.push(cardNow);
+    cardNow = id;
     sheetBody.innerHTML = '';
     sheetBody.scrollTop = 0;
 
+    var top = el('button', 'card-back');
+    top.type = 'button';
+    top.setAttribute('aria-label', cardStack.length ? t('back') : t('close'));
+    top.innerHTML = cardStack.length
+      ? '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    top.addEventListener('click', function () {
+      if (cardStack.length) openPerson(cardStack.pop(), true);
+      else closeSheet();
+    });
+    sheetBody.appendChild(top);
+
     var gal = PHOTOS[id] || [];
     if (gal.length) {
-      var hero = el('img', 'card-photo');
-      hero.src = gal[0].src; hero.alt = p.name;
+      var hero = el('button', 'card-photo');
+      hero.type = 'button';
+      var heroImg = el('img');
+      heroImg.src = gal[0].src; heroImg.alt = p.name;
+      hero.appendChild(heroImg);
+      hero.addEventListener('click', function () { openLB(gal, 0, p.name); });
       sheetBody.appendChild(hero);
     }
 
@@ -1186,10 +1211,14 @@
 
     if (gal.length > 1) {
       var g = el('div', 'gallery');
-      gal.slice(1).forEach(function (ph) {
+      gal.slice(1).forEach(function (ph, k) {
+        var b = el('button', 'shot');
+        b.type = 'button';
         var im = el('img');
         im.src = ph.thumb || ph.src; im.alt = p.name; im.loading = 'lazy';
-        g.appendChild(im);
+        b.appendChild(im);
+        b.addEventListener('click', function () { openLB(gal, k + 1, p.name); });
+        g.appendChild(b);
       });
       sheetBody.appendChild(g);
     }
@@ -1236,6 +1265,83 @@
 
     openLayer(sheet, '?p=' + encodeURIComponent(id));
   }
+
+  /* ── фотография во весь экран ───────────────────────
+     Фотографий на 139 человек пока две, но именно ради них сайт
+     и открывают. Лайтбокс тот же, что на сайте близкой семьи:
+     стрелки, счётчик, свайп пальцем, Esc. */
+  var lb      = document.getElementById('lb');
+  var lbImg   = document.getElementById('lbImg');
+  var lbCap   = document.getElementById('lbCap');
+  var lbCount = document.getElementById('lbCount');
+  var lbFig   = document.getElementById('lbFig');
+  var lbList = [], lbIdx = 0, lbTitle = '';
+  var lbOpen = false, lbPushed = false, skipPop = 0;
+
+  function lbShow() {
+    lbImg.classList.remove('in');
+    lbImg.src = lbList[lbIdx].src;
+    lbCap.textContent = lbTitle;
+    lbCount.textContent = lbList.length > 1
+      ? (lbIdx + 1) + ' / ' + lbList.length : '';
+    lb.classList.toggle('single', lbList.length < 2);
+    /* соседние снимки подгружаем заранее, чтобы стрелка не мигала */
+    [lbIdx - 1, lbIdx + 1].forEach(function (i) {
+      if (i >= 0 && i < lbList.length) { var im = new Image(); im.src = lbList[i].src; }
+    });
+  }
+  lbImg.addEventListener('load', function () { lbImg.classList.add('in'); });
+
+  function openLB(list, idx, title) {
+    if (!list || !list.length) return;
+    lbList = list; lbIdx = idx || 0; lbTitle = title || '';
+    lb.hidden = false;
+    lbOpen = true;
+    lbShow();
+    /* Появление — отдельным кадром, иначе переход не сыграет.
+       Запасной таймер: в фоновой вкладке кадра можно не дождаться. */
+    requestAnimationFrame(function () { lb.classList.add('open'); });
+    setTimeout(function () { if (lbOpen) lb.classList.add('open'); }, 60);
+    /* Своя запись в истории: аппаратная «назад» закрывает снимок,
+       а не всю карточку под ним. */
+    history.pushState({ lb: true }, '');
+    lbPushed = true;
+  }
+  function hideLB() {
+    lb.classList.remove('open');
+    lbOpen = false;
+    setTimeout(function () {
+      if (!lbOpen) { lb.hidden = true; lbImg.src = ''; }
+    }, 360);
+  }
+  function closeLB() {
+    hideLB();
+    if (lbPushed) { lbPushed = false; skipPop++; history.back(); }
+  }
+  function lbStep(d) {
+    if (lbList.length < 2) return;
+    lbIdx = (lbIdx + d + lbList.length) % lbList.length;
+    lbShow();
+  }
+
+  document.querySelectorAll('[data-lb-close]').forEach(function (n) {
+    n.addEventListener('click', closeLB);
+  });
+  document.querySelectorAll('[data-lb-step]').forEach(function (n) {
+    n.addEventListener('click', function () {
+      lbStep(parseInt(n.dataset.lbStep, 10));
+    });
+  });
+  (function swipe() {
+    var x0 = null;
+    lbFig.addEventListener('pointerdown', function (e) { x0 = e.clientX; });
+    lbFig.addEventListener('pointerup', function (e) {
+      if (x0 === null) return;
+      var dx = e.clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 45) lbStep(dx < 0 ? 1 : -1);
+    });
+  })();
 
   /* ── «Сіз кімсіз?» ──────────────────────────────────── */
   var picker = document.getElementById('picker');
@@ -1358,6 +1464,9 @@
     else if (location.search) history.replaceState(null, '', location.pathname);
   }
   function hideLayer() {
+    if (lbOpen) { lbPushed = false; hideLB(); }
+    cardStack = [];
+    cardNow = null;
     if (layer) layer.hidden = true;
     layer = null;
     document.body.classList.remove('locked');
@@ -1369,6 +1478,10 @@
   /* «Вперёд» возвращает на адрес карточки — открываем её снова,
      не заводя новой записи в истории. */
   window.addEventListener('popstate', function () {
+    /* Запись, которую мы сами только что сняли, второй раз
+       обрабатывать нельзя — иначе закроется и карточка. */
+    if (skipPop > 0) { skipPop--; return; }
+    if (lbOpen) { lbPushed = false; hideLB(); return; }
     var back = new URLSearchParams(location.search).get('p');
     if (back && BY[back]) { pushed = true; openPerson(back); return; }
     pushed = false;
@@ -1379,6 +1492,12 @@
   });
   navClose.addEventListener('click', closeLayer);
   document.addEventListener('keydown', function (e) {
+    if (lbOpen) {
+      if (e.key === 'Escape') closeLB();
+      else if (e.key === 'ArrowRight') lbStep(1);
+      else if (e.key === 'ArrowLeft') lbStep(-1);
+      return;
+    }
     if (e.key === 'Escape' && layer) closeLayer();
   });
 
