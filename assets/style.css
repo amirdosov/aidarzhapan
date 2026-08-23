@@ -731,6 +731,23 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 [data-theme="light"] .gate-key-btn{color:#FFFDF8}
 .gate-key-btn:active{transform:scale(.96)}
 
+/* «Вставить»: ссылка уже в буфере, поле трогать незачем. */
+.gate-key-paste{
+  display:block; width:100%; margin:10px 0 0;
+  appearance:none; cursor:pointer;
+  border:1px solid var(--line); border-radius:999px;
+  background:color-mix(in srgb, var(--panel) 60%, transparent);
+  color:var(--gold); font-family:var(--f-body);
+  font-size:13px; font-weight:600; letter-spacing:.04em; padding:12px 18px;
+  transition:border-color .3s var(--ease), transform .3s var(--spring);
+}
+.gate-key-paste:active{transform:scale(.97)}
+/* Адрес запуска: не человеку, а разговору с ним. */
+.gate-key-addr{
+  margin:12px 4px 0; color:var(--muted); opacity:.55;
+  font-size:11px; line-height:1.5; word-break:break-all;
+}
+
 /* ── внутри приложения ──────────────────────────────────
    Значок запускает шежіре без браузерной шапки: сверху остаются
    только часы и вырез. Место под них освобождаем сами — иначе

@@ -118,7 +118,8 @@
   var linkP  = Q.get('p');
   if (linkP && !BY[linkP]) linkP = null;
 
-  var door = KEYS[(location.hash || '').replace(/^#\/?/, '')] || null;
+  var door = KEYS[(location.hash || '').replace(/^#\/?/, '')] ||
+             KEYS[Q.get('k') || ''] || null;
   if (!door && BY[Q.get('me')]) {
     door = { id: Q.get('me'), via: Q.get('via') === '1' };
   }
@@ -146,12 +147,27 @@
      открывается своим именем.
 
      Манифест тут не спасает: подложенный на ходу Safari не читает,
-     он взял свой при загрузке страницы. Поэтому на iPhone манифест
-     вовсе снимается — в шапке страницы, до всего прочего. */
-  var TAIL = '';
-  if (isIOS && !standalone && ego) TAIL = '#' + keyOf(ego, !!egoVia);
-  if (!store.weak && (location.search || location.hash || TAIL)) {
-    history.replaceState(null, '', location.pathname + TAIL);
+     он взял свой при загрузке страницы. Поэтому на iPhone манифеста
+     нет вовсе — в шапке страницы он и не появляется.
+
+     И ключ пишем дважды: `?k=` в самом адресе и хвостом после
+     решётки. Хвост телефон при сохранении может и обрезать —
+     наверняка знать неоткуда, а проверять не на чем: айфона под
+     рукой нет, эмулятор «Негізгі бетке қосу» не показывает.
+     Адрес выходит некрасивый — зато значок открывается своим
+     именем, а некрасивое видно только в браузере: у приложения
+     адресной строки нет. */
+  var KEYTAIL = isIOS && !standalone && ego ? keyOf(ego, !!egoVia) : '';
+
+  function withKey(url) {
+    if (!KEYTAIL) return url;
+    var u = url || location.pathname;
+    u += (u.indexOf('?') > -1 ? '&' : '?') + 'k=' + KEYTAIL;
+    return u + '#' + KEYTAIL;
+  }
+
+  if (!store.weak && (location.search || location.hash || KEYTAIL)) {
+    history.replaceState(null, '', withKey(location.pathname));
   }
 
   /* ── тексты интерфейса ──────────────────────────────── */
@@ -295,6 +311,8 @@
                    ru: 'Вставьте ссылку сюда' },
     gateKeyHint: { kk: 'сілтеме немесе кілт', ru: 'ссылка или ключ' },
     gateKeyGo:   { kk: 'Ашу', ru: 'Открыть' },
+    gateKeyPaste:{ kk: 'Көшірілген сілтемені қою',
+                   ru: 'Вставить скопированную ссылку' },
     gateKeyNo:   { kk: 'Мұндай сілтеме таныс емес',
                    ru: 'Такая ссылка не подходит' }
   };
@@ -1475,11 +1493,11 @@
     /* Карточка живёт по своему адресу — его можно скопировать
        прямо из строки браузера и отправить как есть. */
     if (!pushed) {
-      history.pushState({ layer: true }, '', url ? url + TAIL : null);
+      history.pushState({ layer: true }, '', url ? withKey(url) : null);
       pushed = true;
     } else {
       history.replaceState({ layer: true }, '',
-                           url ? url + TAIL : location.pathname + TAIL);
+                           withKey(url || location.pathname));
     }
   }
   /* Прячем сразу и только потом трогаем историю. Наоборот было
@@ -1489,7 +1507,7 @@
     hideLayer();
     if (pushed) { pushed = false; history.back(); }
     else if (location.search) {
-      history.replaceState(null, '', location.pathname + TAIL);
+      history.replaceState(null, '', withKey(location.pathname));
     }
   }
   function hideLayer() {
@@ -1867,6 +1885,28 @@
     var form = document.getElementById('gateKey');
     if (!form) return;
     form.hidden = false;
+
+    /* По какому адресу открылся значок. Человеку это ни к чему,
+       но когда он говорит «не заходит», спросить больше нечего:
+       здесь сразу видно, доехал ключ или потерялся. */
+    var addr = document.getElementById('gateKeyAddr');
+    if (addr) addr.textContent = location.host + location.pathname +
+                                 location.search + location.hash;
+
+    /* Телефон умеет отдать буфер сам — тогда «вставить» это одно
+       касание вместо возни с полем. Умеет не всякий: кнопку
+       показываем, только если умеет. */
+    var paste = document.getElementById('gateKeyPaste');
+    if (paste && navigator.clipboard && navigator.clipboard.readText) {
+      paste.textContent = t('gateKeyPaste');
+      paste.hidden = false;
+      paste.addEventListener('click', function () {
+        navigator.clipboard.readText().then(function (txt) {
+          document.getElementById('gateKeyInput').value = txt || '';
+          tryKey(txt || '');
+        }).catch(function () { toast(t('gateKeyNo')); });
+      });
+    }
     /* На пороге внутри приложения говорим не «ссылка открывает
        шежіре», а прямо: где эту ссылку взять и что с ней сделать. */
     var note = document.querySelector('.gate-note');
@@ -1876,21 +1916,33 @@
     }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var s = (document.getElementById('gateKeyInput').value || '').trim();
-      var hit = null;
-      var h = s.match(/#\/?([^#?\s]+)/);
-      if (h && KEYS[h[1]]) hit = KEYS[h[1]];
-      if (!hit && KEYS[s]) hit = KEYS[s];
-      if (!hit) {                                   /* и старые ссылки */
-        var q = s.match(/[?&]me=([^&#\s]+)/);
-        if (q && BY[q[1]]) hit = { id: q[1], via: /[?&]via=1/.test(s) };
-      }
-      if (!hit) { toast(t('gateKeyNo')); return; }
-      /* Ключ кладём в адрес и перечитываем страницу: дальше всё
-         идёт обычной дорогой, как по ссылке из WhatsApp. */
-      location.hash = keyOf(hit.id, hit.via);
-      location.reload();
+      tryKey(document.getElementById('gateKeyInput').value || '');
     });
+  }
+
+  /* Из ссылки, из ключа, из старого адреса `?me=` — и даже
+     из целого сообщения, в котором ссылка просто где-то внутри. */
+  function tryKey(raw) {
+    var s = String(raw).trim();
+    var hit = null;
+    var h = s.match(/#\/?([a-z2-9]{6})/i);
+    if (h && KEYS[h[1]]) hit = KEYS[h[1]];
+    if (!hit) {                                   /* ключ в адресе */
+      var k = s.match(/[?&]k=([a-z2-9]{6})/i);
+      if (k && KEYS[k[1]]) hit = KEYS[k[1]];
+    }
+    if (!hit && KEYS[s] && KEYS[s].id) hit = KEYS[s];   /* один ключ */
+    if (!hit) {                                   /* и старые ссылки */
+      var q = s.match(/[?&]me=([^&#\s]+)/);
+      if (q && BY[q[1]] && BY[q[1]].id) {
+        hit = { id: q[1], via: /[?&]via=1/.test(s) };
+      }
+    }
+    if (!hit) { toast(t('gateKeyNo')); return; }
+    /* Ключ кладём в адрес и перечитываем страницу: дальше всё
+       идёт обычной дорогой, как по ссылке из WhatsApp. */
+    location.hash = keyOf(hit.id, hit.via);
+    location.reload();
   }
 
   /* ── старт ──────────────────────────────────────────── */
