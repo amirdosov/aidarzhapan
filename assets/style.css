@@ -540,18 +540,27 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .shot:hover{border-color:var(--gold); transform:translateY(-2px)}
 .shot:hover img{transform:scale(1.08)}
 
-/* Переходы «в ветку» и «в линию» — не действия, а двери внутрь
-   сайта, поэтому говорят вполголоса: громко здесь только ключ. */
-.card-actions{display:flex; gap:8px; margin-top:6px}
+/* Переходы «в ветку» и «в линию» стоят сразу под чипами родни —
+   такими же пилюлями они с ними и сливались. Отбиваем волоском
+   и воздухом: ниже волоска карточка уже не рассказывает про человека,
+   а предлагает что-то сделать. Внутри этой полосы свой порядок —
+   переходы ведут вглубь сайта и говорят тише, наружу отдаёт
+   только ключ. */
+.card-actions{
+  display:flex; gap:8px; margin-top:22px; padding-top:18px;
+  border-top:1px solid var(--line-soft);
+}
 .card-act{
   appearance:none; cursor:pointer; flex:1;
-  border:1px solid var(--line-soft); border-radius:999px; background:transparent;
-  color:var(--muted); font-family:var(--f-body); font-size:12px; font-weight:600;
-  letter-spacing:.14em; text-transform:uppercase; padding:12px;
+  border:1px solid var(--line); border-radius:999px;
+  background:color-mix(in srgb, var(--panel) 75%, transparent);
+  color:var(--gold); font-family:var(--f-body); font-size:11.5px; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; padding:12px 10px;
   transition:background .3s var(--ease), color .3s var(--ease),
              border-color .3s var(--ease);
 }
 .card-act:hover{background:var(--gold); color:var(--bg); border-color:var(--gold)}
+.card-act:active{background:var(--gold); color:var(--bg)}
 
 @media (min-width:720px){
   .sheet{align-items:center}
@@ -600,7 +609,7 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .card-door{
   appearance:none; cursor:pointer; display:flex; width:100%;
   align-items:center; gap:13px; text-align:left;
-  margin:16px 0 2px; padding:14px 16px;
+  margin:10px 0 2px; padding:14px 16px;
   border:1px solid var(--gold-dim); border-radius:16px;
   background:linear-gradient(180deg,
     color-mix(in srgb, var(--gold) 14%, transparent),
