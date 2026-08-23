@@ -14,7 +14,14 @@
 (function () {
   'use strict';
 
-  var DATA    = window.AIDARZHAPAN || { people: [], unions: [] };
+  /* Скрипты едут по мобильной сети и доезжают не всегда. Раньше
+     недостающий kinship.js валил всё на первой же строке, и человек
+     видел пустую страницу вместо объяснения. */
+  if (!window.AIDARZHAPAN || !window.KINSHIP) {
+    throw new Error('деректер жүктелмеді');
+  }
+
+  var DATA    = window.AIDARZHAPAN;
   var STORIES = window.AIDARZHAPAN_STORIES || {};
   var PHOTOS  = window.AIDARZHAPAN_PHOTOS || {};
   var KIN     = window.KINSHIP.make(DATA.people, DATA.unions);
@@ -22,10 +29,30 @@
   var BY = {};
   DATA.people.forEach(function (p) { BY[p.id] = p; });
 
-  var lang  = localStorage.getItem('az-lang')  || 'kk';
-  var theme = localStorage.getItem('az-theme') || 'dark';
-  var ego   = localStorage.getItem('az-ego')   || null;
-  var egoVia = localStorage.getItem('az-ego-via') || null;   // назван супругом
+  /* Хранилище браузер может и запретить: «блокировать все cookie»,
+     строгий приватный режим, встроенные браузеры приложений. Само
+     обращение к нему тогда бросает — а падало всё, вместе с сайтом.
+     Без хранилища сайт работает, просто забывает всё при уходе. */
+  var store = (function () {
+    try {
+      localStorage.setItem('az-probe', '1');
+      localStorage.removeItem('az-probe');
+      return localStorage;
+    } catch (e) {
+      var mem = {};
+      return {
+        weak: true,
+        getItem: function (k) { return mem[k] === undefined ? null : mem[k]; },
+        setItem: function (k, v) { mem[k] = String(v); },
+        removeItem: function (k) { delete mem[k]; }
+      };
+    }
+  })();
+
+  var lang  = store.getItem('az-lang')  || 'kk';
+  var theme = store.getItem('az-theme') || 'dark';
+  var ego   = store.getItem('az-ego')   || null;
+  var egoVia = store.getItem('az-ego-via') || null;   // назван супругом
   if (ego && !BY[ego]) { ego = null; egoVia = null; }
 
   /* ── ключ в адресе ──────────────────────────────────
@@ -90,11 +117,14 @@
   if (door) {
     ego    = door.id;
     egoVia = door.via ? door.id : null;
-    localStorage.setItem('az-ego', ego);
-    if (egoVia) localStorage.setItem('az-ego-via', egoVia);
-    else localStorage.removeItem('az-ego-via');
+    store.setItem('az-ego', ego);
+    if (egoVia) store.setItem('az-ego-via', egoVia);
+    else store.removeItem('az-ego-via');
   }
-  if (location.search || location.hash) {
+  /* Адрес чистим сразу — дальше историей распоряжаются слои.
+     Но если помнить некуда, ключ из адреса убирать нельзя: он там
+     единственное, что удержит человека внутри при перезагрузке. */
+  if (!store.weak && (location.search || location.hash)) {
     history.replaceState(null, '', location.pathname);
   }
 
@@ -504,7 +534,7 @@
      человека. Вверх ведёт дорожка над сценой. */
   /* На узком экране схема нечитаема, поэтому по умолчанию список.
      Старое значение из прежней версии сайта не подходит — проверяем. */
-  var treeMode = localStorage.getItem('az-tree-mode');
+  var treeMode = store.getItem('az-tree-mode');
   if (['tree', 'list', 'gen'].indexOf(treeMode) < 0) {
     treeMode = window.innerWidth < 760 ? 'list' : 'tree';
   }
@@ -557,7 +587,7 @@
     focusId = id;
     FOLD = {}; crumbsAll = false;
     if (treeMode === 'gen') treeMode = 'list';
-    localStorage.setItem('az-tree-mode', treeMode);
+    store.setItem('az-tree-mode', treeMode);
     if (view !== 'tree') setView('tree');
     else { window.scrollTo(0, 0); renderTree(); }
   }
@@ -1512,6 +1542,14 @@
   /* ── появление карточек ─────────────────────────────── */
   var io = null;
   function observeAll() {
+    /* Без наблюдателя карточки просто показываем сразу: анимация
+       появления — не то, ради чего открывают шежіре. */
+    if (!window.IntersectionObserver) {
+      document.querySelectorAll('.reveal, .orn').forEach(function (n) {
+        n.classList.add('in');
+      });
+      return;
+    }
     if (io) io.disconnect();
     io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
@@ -1562,7 +1600,7 @@
     b.addEventListener('click', function () {
       if (treeMode === b.dataset.treeMode) return;
       treeMode = b.dataset.treeMode;
-      localStorage.setItem('az-tree-mode', treeMode);
+      store.setItem('az-tree-mode', treeMode);
       window.scrollTo(0, 0);
       renderTree();
     });
@@ -1572,7 +1610,7 @@
     b.addEventListener('click', function () {
       if (lang === b.dataset.langSet) return;
       lang = b.dataset.langSet;
-      localStorage.setItem('az-lang', lang);
+      store.setItem('az-lang', lang);
       paint();
     });
   });
@@ -1584,7 +1622,7 @@
   }
   document.getElementById('themeBtn').addEventListener('click', function () {
     theme = theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('az-theme', theme);
+    store.setItem('az-theme', theme);
     applyTheme();
   });
 
