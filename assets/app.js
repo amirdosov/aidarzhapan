@@ -235,7 +235,23 @@
     dauOfF:      { kk: '{n} қызы', ru: 'мать: {n}' },
     kidOfF:      { kk: '{n} баласы', ru: 'мать: {n}' },
     openedAs:  { kk: 'Шежіре {n} атынан ашылды',
-                 ru: 'Шежіре открыто от имени {n}' }
+                 ru: 'Шежіре открыто от имени {n}' },
+
+    installAct:  { kk: 'Қосымша ретінде орнату',
+                   ru: 'Установить приложением' },
+    installNote: { kk: 'Шежіре браузерсіз ашылады, интернетсіз де оқылады',
+                   ru: 'Шежіре будет открываться без браузера и читаться ' +
+                       'без интернета' },
+    installIos:  { kk: 'Телефонға қосу: астындағы «Бөлісу» → «Негізгі ' +
+                       'бетке қосу». Шежіре интернетсіз де ашылады',
+                   ru: 'Поставить на телефон: «Поделиться» внизу → «На ' +
+                       'экран „Домой“». Шежіре откроется и без интернета' },
+    gateKeyLabel:{ kk: 'Сілтемеңіз бар ма? Осында қойыңыз',
+                   ru: 'Ссылка у вас есть? Вставьте её сюда' },
+    gateKeyHint: { kk: 'сілтеме немесе кілт', ru: 'ссылка или ключ' },
+    gateKeyGo:   { kk: 'Ашу', ru: 'Открыть' },
+    gateKeyNo:   { kk: 'Мұндай сілтеме таныс емес',
+                   ru: 'Такая ссылка не подходит' }
   };
 
   function t(key, vars) {
@@ -1573,6 +1589,9 @@
       b.classList.toggle('is-on', b.dataset.langSet === lang);
     });
 
+    var gateKeyInput = document.getElementById('gateKeyInput');
+    if (gateKeyInput) gateKeyInput.placeholder = t('gateKeyHint');
+
     /* На пороге языком переключаются те же кнопки в шапке, но
        рисовать сам сайт незачем: там ещё некому быть «вами». */
     if (!ego) return;
@@ -1626,6 +1645,109 @@
     applyTheme();
   });
 
+  /* ══ шежіре как приложение ═══════════════════════════════
+     Телефон умеет держать сайт у себя: значок на экране, запуск
+     без браузера, чтение без интернета. Дальше — то, без чего
+     это осталось бы значком с порогом за ним. */
+
+  var standalone = (window.matchMedia &&
+                    matchMedia('(display-mode: standalone)').matches) ||
+                   navigator.standalone === true;
+  /* iPhone сам ничего не предлагает: там это делают руками,
+     через «Поделиться». Значит нужно хотя бы сказать, где искать. */
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  /* ── свой адрес запуска ────────────────────────────────
+     Значок открывает сайт по адресу из манифеста — а там ключа
+     нет, и приложение вставало бы на пороге. Поэтому, как только
+     знаем, кто открыл, подкладываем тот же манифест, но с личным
+     адресом запуска: тем самым, что пришёл в WhatsApp.
+     Собираем его из настоящего файла, а не заводим второй:
+     правки в манифесте не должны требовать правок здесь. */
+  function personalStart() {
+    var link = document.getElementById('manifest');
+    if (!link || !ego || !window.fetch || !window.Blob) return;
+    var from = link.href;
+    fetch(from).then(function (r) { return r.json(); }).then(function (m) {
+      var base = location.origin + location.pathname;
+      m.start_url = base + '#' + keyOf(ego, !!egoVia);
+      m.scope = base;
+      /* Адреса внутри blob считать не от чего — выпрямляем. */
+      m.icons = (m.icons || []).map(function (i) {
+        return { src: new URL(i.src, from).href, sizes: i.sizes,
+                 type: i.type, purpose: i.purpose };
+      });
+      link.href = URL.createObjectURL(
+        new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
+    }).catch(function () {});
+  }
+
+  /* ── предложение поставить ─────────────────────────────
+     Android спрашивает сам и даёт спросить нам — перехватываем,
+     чтобы окно выскакивало не посреди чтения, а по кнопке внизу. */
+  var installOffer = null;
+  var installBox   = document.getElementById('install');
+  var installBtn   = document.getElementById('installBtn');
+
+  /* Какую подсказку показать, решаем один раз, а дальше её
+     подхватывает paint() — вместе со сменой языка. */
+  function offerInstall(note, withBtn) {
+    if (!installBox || standalone || !ego) return;
+    var n = document.getElementById('installNote');
+    n.dataset.i18n = note;
+    n.textContent = t(note);
+    installBtn.textContent = t('installAct');
+    installBox.hidden = false;
+    installBtn.hidden = !withBtn;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    installOffer = e;
+    offerInstall('installNote', true);
+  });
+  window.addEventListener('appinstalled', function () {
+    installOffer = null;
+    if (installBox) installBox.hidden = true;
+  });
+  if (installBtn) installBtn.addEventListener('click', function () {
+    if (!installOffer) return;
+    installOffer.prompt();
+    installOffer = null;
+    installBtn.hidden = true;
+  });
+  if (isIOS) offerInstall('installIos', false);
+
+  /* ── порог внутри приложения ───────────────────────────
+     Ссылку из WhatsApp телефон откроет браузером, а не значком,
+     и приложение о ней не узнает: память у них разная. Значок
+     остался бы немым навсегда. Поэтому здесь — и только здесь —
+     ссылку можно вставить руками. Дверь та же, ключ тот же;
+     новым это ничего не открывает. */
+  function gateKeyOn() {
+    var form = document.getElementById('gateKey');
+    if (!form) return;
+    form.hidden = false;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var s = (document.getElementById('gateKeyInput').value || '').trim();
+      var hit = null;
+      var h = s.match(/#\/?([^#?\s]+)/);
+      if (h && KEYS[h[1]]) hit = KEYS[h[1]];
+      if (!hit && KEYS[s]) hit = KEYS[s];
+      if (!hit) {                                   /* и старые ссылки */
+        var q = s.match(/[?&]me=([^&#\s]+)/);
+        if (q && BY[q[1]]) hit = { id: q[1], via: /[?&]via=1/.test(s) };
+      }
+      if (!hit) { toast(t('gateKeyNo')); return; }
+      /* Ключ кладём в адрес и перечитываем страницу: дальше всё
+         идёт обычной дорогой, как по ссылке из WhatsApp. */
+      location.hash = keyOf(hit.id, hit.via);
+      location.reload();
+    });
+  }
+
   /* ── старт ──────────────────────────────────────────── */
   /* При «назад» браузер сам возвращает прокрутку на прежнее место.
      Слои — наша собственная история, и такое возвращение спорит
@@ -1651,8 +1773,11 @@
   if (!ego) {
     document.body.classList.add('gated');
     document.getElementById('gate').hidden = false;
+    if (standalone) gateKeyOn();
     return;
   }
+
+  personalStart();
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
