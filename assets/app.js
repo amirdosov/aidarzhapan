@@ -177,11 +177,9 @@
     inTape:   { kk: 'Тізбектен көрсету', ru: 'Показать в линии' },
     pathLabel:{ kk: 'Туыстық жолы', ru: 'Путь родства' },
 
-    share:     { kk: 'Бөлісу', ru: 'Поделиться' },
-    shareMe:   { kk: '{n} үшін сілтеме — шежіре оның атынан ашылады',
-                 ru: 'Ссылка для {n} — шежіре откроется от его имени' },
-    shareCard: { kk: '{n} — АйдарЖапан шежіресі',
-                 ru: '{n} — шежіре АйдарЖапан' },
+    doorAct:   { kk: '{n} үшін сілтеме', ru: 'Ссылка для {n}' },
+    doorNote:  { kk: 'ашқан адам шежірені өз атынан көреді',
+                 ru: 'получатель увидит шежіре от своего имени' },
     shareEgo:  { kk: '{n}, мынау сіздің шежіреңіз',
                  ru: '{n}, это ваше шежіре' },
     copied:    { kk: 'Сілтеме көшірілді', ru: 'Ссылка скопирована' },
@@ -257,15 +255,11 @@
   }
 
   /* ── ссылки и «поделиться» ──────────────────────────── */
-  /* Вход для человека: тот самый немой хвост. */
+  /* Вход для человека: тот самый немой хвост. Других ссылок сайт
+     наружу не отдаёт — карточка и так кладёт себя в адресную
+     строку, оттуда её и копируют. */
   function doorLink(id, via) {
     return location.origin + location.pathname + '#' + keyOf(id, via);
-  }
-  function linkTo(params) {
-    var q = Object.keys(params).map(function (k) {
-      return k + '=' + encodeURIComponent(params[k]);
-    }).join('&');
-    return location.origin + location.pathname + (q ? '?' + q : '');
   }
 
   var toastNode = document.getElementById('toast');
@@ -1252,25 +1246,24 @@
     }
     sheetBody.appendChild(jump);
 
-    var actions = el('div', 'card-actions');
-    var sh = el('button', 'card-act', esc(t('share')));
-    sh.type = 'button';
-    sh.addEventListener('click', function () {
-      share(linkTo({ p: id }), t('shareCard', { n: p.name }));
-    });
-    actions.appendChild(sh);
-    sheetBody.appendChild(actions);
-
-    /* Вторая ссылка — вход для самого этого человека: открыв её,
-       он попадёт на сайт от своего имени. Так доступ и расходится
-       по родне. Предлагаем её тем, кто, судя по записям, жив. */
+    /* Единственное, что карточка отдаёт наружу, — ключ для самого
+       этого человека: открыв его, он попадёт на сайт от своего
+       имени. Так доступ и расходится по родне, поэтому кнопка
+       здесь одна и выглядит главной. Предлагаем её тем, кто,
+       судя по записям, жив. */
     if (id !== ego && maybeAlive(p)) {
-      var shMe = el('button', 'card-share-me', esc(t('shareMe', { n: p.name })));
-      shMe.type = 'button';
-      shMe.addEventListener('click', function () {
+      var door = el('button', 'card-door');
+      door.type = 'button';
+      door.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle cx="8.5" cy="15.5" r="3.8"/>' +
+        '<path d="M11.2 12.8 19.5 4.5M15.6 8.4l2.3 2.3M17.9 6.1l2.3 2.3"/></svg>' +
+        '<span class="door-in"><b>' + esc(t('doorAct', { n: p.name })) + '</b>' +
+        '<i>' + esc(t('doorNote')) + '</i></span>';
+      door.addEventListener('click', function () {
         share(doorLink(id), t('shareEgo', { n: p.name }));
       });
-      sheetBody.appendChild(shMe);
+      sheetBody.appendChild(door);
     }
 
     openLayer(sheet, '?p=' + encodeURIComponent(id));
