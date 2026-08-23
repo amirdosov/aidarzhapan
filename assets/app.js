@@ -28,30 +28,75 @@
   var egoVia = localStorage.getItem('az-ego-via') || null;   // назван супругом
   if (ego && !BY[ego]) { ego = null; egoVia = null; }
 
+  /* ── ключ в адресе ──────────────────────────────────
+     Ссылка не должна выглядеть пропуском. ?me=amankeldi
+     объясняла сама себя: и что это вход, и кого впускает —
+     достаточно поменять имя. Поэтому ключ короткий и немой:
+     .../aidarzhapan/#k7f2qa. Считается из имени в шежіре и соли,
+     таблицы кодов нигде нет, ключ супруга — отдельный код.
+
+     Секретом соль не является: репозиторий открытый, она строкой
+     ниже. Толк в другом — ссылка не называет человека по имени
+     (а она идёт через WhatsApp и оседает в чужих переписках)
+     и не подсказывает, что подставить вместо него.
+
+     Ключ живёт после решётки: такой хвост не уходит на сервер
+     и не попадает в Referer, если из шежіре щёлкнуть наружу. */
+  var SALT = 'aidarzhapan-adai-1435';
+  var ABC  = '23456789abcdefghjkmnpqrstuvwxyz';   /* без 0/1/o/l — их путают */
+
+  function keyOf(id, via) {
+    var s = SALT + '|' + id + (via ? '|via' : ''), h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
+    }
+    var out = '';
+    for (var k = 0; k < 6; k++) { out += ABC.charAt(h % 31); h = Math.floor(h / 31); }
+    return out;
+  }
+
+  var KEYS = {};
+  DATA.people.forEach(function (p) {
+    KEYS[keyOf(p.id)]       = { id: p.id, via: false };
+    KEYS[keyOf(p.id, true)] = { id: p.id, via: true };
+  });
+  /* Два человека с одним ключом — это чужая дверь, открытая своим
+     ключом. Проверяем вслух: молча такое не ловится. */
+  if (Object.keys(KEYS).length !== DATA.people.length * 2) {
+    console.warn('AZ: ключи совпали, нужна другая соль');
+  }
+
   /* ── адрес страницы ─────────────────────────────────
-     Адрес — это и есть вход. Понимаем два:
-       ?me=alpamys  — ключ: открывший становится этим человеком
+     Адрес — это и есть вход. Понимаем три:
+       #k7f2qa      — ключ: открывший становится этим человеком
                       и сразу видит родство от себя
+       ?me=alpamys  — те же ворота, но старые: первые ссылки ушли
+                      родне в таком виде и должны работать дальше
        ?p=qoshqar   — карточка человека; открывается у того, кто
-                      уже входил по своей ссылке
+                      уже входил по своему ключу
      Кому прислали чужую ссылку, поправит своей: последняя
      открытая перебивает прежнюю.
      Разобрали — и сразу чистим адрес: дальше историей
      распоряжается сам сайт, слоями. */
   var Q      = new URLSearchParams(location.search);
   var linkP  = Q.get('p');
-  var linkMe = Q.get('me');
   if (linkP && !BY[linkP]) linkP = null;
-  if (linkMe && BY[linkMe]) {
-    ego    = linkMe;
-    egoVia = Q.get('via') === '1' ? linkMe : null;
+
+  var door = KEYS[(location.hash || '').replace(/^#\/?/, '')] || null;
+  if (!door && BY[Q.get('me')]) {
+    door = { id: Q.get('me'), via: Q.get('via') === '1' };
+  }
+  if (door) {
+    ego    = door.id;
+    egoVia = door.via ? door.id : null;
     localStorage.setItem('az-ego', ego);
     if (egoVia) localStorage.setItem('az-ego-via', egoVia);
     else localStorage.removeItem('az-ego-via');
-  } else {
-    linkMe = null;
   }
-  if (location.search) history.replaceState(null, '', location.pathname);
+  if (location.search || location.hash) {
+    history.replaceState(null, '', location.pathname);
+  }
 
   /* ── тексты интерфейса ──────────────────────────────── */
   var T = {
@@ -212,6 +257,10 @@
   }
 
   /* ── ссылки и «поделиться» ──────────────────────────── */
+  /* Вход для человека: тот самый немой хвост. */
+  function doorLink(id, via) {
+    return location.origin + location.pathname + '#' + keyOf(id, via);
+  }
   function linkTo(params) {
     var q = Object.keys(params).map(function (k) {
       return k + '=' + encodeURIComponent(params[k]);
@@ -1219,7 +1268,7 @@
       var shMe = el('button', 'card-share-me', esc(t('shareMe', { n: p.name })));
       shMe.type = 'button';
       shMe.addEventListener('click', function () {
-        share(linkTo({ me: id }), t('shareEgo', { n: p.name }));
+        share(doorLink(id), t('shareEgo', { n: p.name }));
       });
       sheetBody.appendChild(shMe);
     }
@@ -1554,6 +1603,15 @@
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
   applyTheme();
+
+  /* Ключ в уже открытой вкладке. Браузер на такой ссылке меняет
+     только хвост и документ не перезагружает — а ключ пришёл новый,
+     и человек остался бы чужим именем. Или стоял бы на пороге,
+     держа в руках свой ключ. */
+  window.addEventListener('hashchange', function () {
+    if (KEYS[(location.hash || '').replace(/^#\/?/, '')]) location.reload();
+  });
+
   paint();
 
   /* Порог. Ключа нет — сайта нет: ни ленты, ни поиска, ни имён.
@@ -1570,6 +1628,6 @@
 
   /* Пришёл по ссылке — здороваемся и показываем то, ради чего
      её прислали. */
-  if (linkMe) toast(t('openedAs', { n: BY[linkMe].name }));
+  if (door) toast(t('openedAs', { n: BY[door.id].name }));
   if (linkP) openPerson(linkP);
 })();

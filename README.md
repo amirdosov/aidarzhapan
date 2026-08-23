@@ -30,7 +30,7 @@ docs/       документация
 Сайт открывается личной ссылкой:
 
 ```
-https://amirdosov.github.io/aidarzhapan/?me=amankeldi
+https://amirdosov.github.io/aidarzhapan/#c69mys
 ```
 
 Кто в ней назван, тот здесь и «я»: лента строится от него, родство
@@ -47,7 +47,7 @@ https://amirdosov.github.io/aidarzhapan/?me=amankeldi
 python -m http.server 8765
 ```
 
-Локально войти можно так же — `http://localhost:8765/?me=amankeldi`.
+Локально войти можно так же — `http://localhost:8765/#c69mys`.
 
 ## Фотографии
 
