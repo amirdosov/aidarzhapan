@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=14">
+<link rel="stylesheet" href="assets/style.css?v=15">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
 </head>
 <body>
@@ -30,7 +30,7 @@
       <span data-i18n="brand"></span>
     </a>
     <div class="bar-tools">
-      <button class="me-btn" id="meBtn"><span id="meLabel"></span></button>
+      <span class="me-tag" id="meTag"></span>
       <div class="seg" role="group" aria-label="Language">
         <button class="seg-btn is-on" data-lang-set="kk">ҚАЗ</button>
         <button class="seg-btn" data-lang-set="ru">РУС</button>
@@ -62,7 +62,6 @@
           <path class="draw" d="M120 15c-5 0-8 3.6-8 8s3 8 8 8 8-3.6 8-8-3-8-8-8Z"/>
         </svg>
 
-        <button class="cta" id="heroPick" data-i18n="pickCta"></button>
         <p class="hint" id="heroHint"></p>
       </div>
     </div>
@@ -193,19 +192,24 @@
   </figure>
 </div>
 
-<!-- ═══════════ «Сіз кімсіз?» ═══════════ -->
-<div class="sheet picker" id="picker" hidden>
-  <div class="sheet-scrim" data-close></div>
-  <div class="sheet-body">
-    <div class="picker-head">
-      <h2 data-i18n="pickTitle"></h2>
-      <p class="muted small" data-i18n="pickNote"></p>
-      <div class="search-box">
-        <input type="search" id="pickInput" autocomplete="off" spellcheck="false">
-      </div>
-      <button class="pick-skip" id="pickSkip" data-close></button>
-    </div>
-    <div class="list" id="pickList"></div>
+<!-- ═══════════ порог ═══════════
+     Без личной ссылки сайта нет: обложка, одна фраза и всё.
+     Имён здесь не показываем — список имён и был бы подсказкой,
+     что подставлять в адрес. -->
+<div class="gate" id="gate" hidden>
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="gate-in">
+    <p class="kicker" data-i18n="kicker"></p>
+    <h1 class="title" data-i18n="title"></h1>
+    <p class="surname" data-i18n="surname"></p>
+    <svg class="orn in" viewBox="0 0 240 46" aria-hidden="true">
+      <path class="draw" d="M8 23h74"/>
+      <path class="draw" d="M232 23h-74"/>
+      <path class="draw" d="M120 8c-11 0-18 7-18 15s7 15 18 15 18-7 18-15-7-15-18-15Z"/>
+      <path class="draw" d="M120 15c-5 0-8 3.6-8 8s3 8 8 8 8-3.6 8-8-3-8-8-8Z"/>
+    </svg>
+    <p class="gate-line" data-i18n="gateLine"></p>
+    <p class="gate-note" data-i18n="gateNote"></p>
   </div>
 </div>
 
@@ -216,6 +220,6 @@
 <script src="data/stories.js?v=2"></script>
 <script src="assets/photos.js?v=2"></script>
 <script src="assets/kinship.js?v=2"></script>
-<script src="assets/app.js?v=15"></script>
+<script src="assets/app.js?v=16"></script>
 </body>
 </html>

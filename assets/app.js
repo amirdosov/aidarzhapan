@@ -1,14 +1,15 @@
 /* ══════════════════════════════════════════════════════════
    АйдарЖапан шежіресі
 
-   Сайт открывает не один человек, а вся родня, поэтому первым
-   делом он спрашивает: «Сіз кімсіз?». Выбранный человек (ego)
-   живёт в localStorage, и от него считается всё остальное —
-   лента предков и родство с каждым из 139.
+   Сайт открывается личной ссылкой: ?me=amankeldi. Кто в ней
+   назван, тот здесь и «я» (ego): от него строится лента предков
+   и считается родство с каждым из 139. Выбора из списка нет —
+   имя приходит вместе со ссылкой.
 
-   Кто не выбрал себя, всё равно видит шежіре целиком: лента
-   тогда строится по прямой линии, а строки «кем приходится»
-   просто нет.
+   Без ссылки сайт не открывается: вместо него порог, обложка
+   и одна фраза. Доступ раздаёт не сайт, а сама родня — в каждой
+   карточке есть ссылка «для этого человека», и она расходится
+   по WhatsApp из рук в руки.
    ══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -24,15 +25,17 @@
   var lang  = localStorage.getItem('az-lang')  || 'kk';
   var theme = localStorage.getItem('az-theme') || 'dark';
   var ego   = localStorage.getItem('az-ego')   || null;
-  var egoVia = localStorage.getItem('az-ego-via') || null;   // выбран как супруг
+  var egoVia = localStorage.getItem('az-ego-via') || null;   // назван супругом
   if (ego && !BY[ego]) { ego = null; egoVia = null; }
 
   /* ── адрес страницы ─────────────────────────────────
-     Сайт расходится по родне ссылками в WhatsApp, поэтому
-     понимает два адреса:
-       ?p=qoshqar   — открыть карточку человека
-       ?me=alpamys  — открыть сайт уже настроенным на человека,
-                      чтобы получатель сразу видел родство от себя
+     Адрес — это и есть вход. Понимаем два:
+       ?me=alpamys  — ключ: открывший становится этим человеком
+                      и сразу видит родство от себя
+       ?p=qoshqar   — карточка человека; открывается у того, кто
+                      уже входил по своей ссылке
+     Кому прислали чужую ссылку, поправит своей: последняя
+     открытая перебивает прежнюю.
      Разобрали — и сразу чистим адрес: дальше историей
      распоряжается сам сайт, слоями. */
   var Q      = new URLSearchParams(location.search);
@@ -45,7 +48,6 @@
     localStorage.setItem('az-ego', ego);
     if (egoVia) localStorage.setItem('az-ego-via', egoVia);
     else localStorage.removeItem('az-ego-via');
-    localStorage.setItem('az-asked', '1');
   } else {
     linkMe = null;
   }
@@ -60,18 +62,13 @@
     lede:    { kk: '139 адам, 20 ұрпақ · бүгіннен Адайға (1435) дейін',
                ru: '139 человек, 20 поколений · от наших дней до Адая (1435)' },
 
-    pickCta:   { kk: 'Сіз кімсіз?', ru: 'Кто вы?' },
-    pickAgain: { kk: 'Басқа адамды таңдау', ru: 'Выбрать другого' },
-    pickTitle: { kk: 'Сіз кімсіз?', ru: 'Кто вы?' },
-    pickNote:  { kk: 'Таңдаңыз — сонда әркімнің сізге кім болатыны көрінеді. ' +
-                     'Шежіреде жоқ болсаңыз (келін, күйеу бала), жұбайыңызды таңдаңыз.',
-                 ru: 'Выберите себя — и рядом с каждым появится, кем он вам ' +
-                     'приходится. Если вас в шежіре нет (сноха, зять), выберите супруга.' },
-    pickSkip:  { kk: 'Кейінірек', ru: 'Позже' },
-    hintNone:  { kk: 'Таңдасаңыз, туыстық есептеледі',
-                 ru: 'Выберите — и родство посчитается' },
+    gateLine:  { kk: 'Шежіре жеке сілтеме арқылы ашылады',
+                 ru: 'Шежіре открывается личной ссылкой' },
+    gateNote:  { kk: 'Сілтемені туысыңыз жібереді. Ашқан бойда шежіре ' +
+                     'сіздің атыңыздан ашылады: әркімнің сізге кім болатыны көрініп тұрады.',
+                 ru: 'Ссылку присылает кто-то из родни. Открыв её, вы увидите ' +
+                     'шежіре от своего имени: рядом с каждым будет, кем он вам приходится.' },
     hintVia:   { kk: '{n} арқылы есептелуде', ru: 'считается через {n}' },
-    iamSpouse: { kk: 'жұбайымын', ru: 'я супруг(а)' },
     viaTag:    { kk: 'жұбайы', ru: 'супруг(а)' },
     forSpouse: { kk: '{n} үшін:', ru: 'для {n}:' },
 
@@ -90,7 +87,6 @@
     kinTitle:   { kk: 'Менің туыстарым', ru: 'Мои родственники' },
     kinLede:    { kk: '139 адамның ішінен жақындарыңыз — іздеудің қажеті жоқ',
                   ru: 'Ваши близкие среди 139 — искать не нужно' },
-    kinAsk:     { kk: 'Алдымен өзіңізді таңдаңыз', ru: 'Сначала выберите себя' },
     kinFar:     { kk: 'Тағы {n} алыс туыс — «Ағаш» пен «Іздеуден» қараңыз',
                   ru: 'Ещё {n} дальних родственников — смотрите в «Древе» и «Поиске»' },
     kinCount:   { kk: 'Жақын туыс: {n}', ru: 'Близкой родни: {n}' },
@@ -124,8 +120,6 @@
     genLabel: { kk: '{o} ұрпақ', ru: '{n}-е колено' },
     railMe:   { kk: 'Сіз — Адайдан <b>{o} ұрпақ</b>',
                 ru: 'Вы — <b>{n}-е колено</b> от Адая' },
-    railAny:  { kk: 'Шежіре тізбегі · бүгіннен Адайға',
-                ru: 'Линия шежіре · от наших дней до Адая' },
     me:       { kk: 'Сіз', ru: 'Вы' },
     spouseOf: { kk: 'жұбайы {n}', ru: 'супруг(а): {n}' },
 
@@ -136,14 +130,11 @@
     mates:    { kk: 'Жұбайы', ru: 'Супруг(а)' },
     rodLabel: { kk: 'Руы', ru: 'Род' },
     inTape:   { kk: 'Тізбектен көрсету', ru: 'Показать в линии' },
-    setMe:    { kk: 'Бұл менмін', ru: 'Это я' },
-    noRel:    { kk: 'Өзіңізді таңдаңыз — туыстық шығады',
-                ru: 'Выберите себя — появится родство' },
     pathLabel:{ kk: 'Туыстық жолы', ru: 'Путь родства' },
 
     share:     { kk: 'Бөлісу', ru: 'Поделиться' },
-    shareMe:   { kk: '{n} үшін сілтеме — ашқан бойда өзі таңдалып тұрады',
-                 ru: 'Ссылка для {n} — откроется уже выбранным' },
+    shareMe:   { kk: '{n} үшін сілтеме — шежіре оның атынан ашылады',
+                 ru: 'Ссылка для {n} — шежіре откроется от его имени' },
     shareCard: { kk: '{n} — АйдарЖапан шежіресі',
                  ru: '{n} — шежіре АйдарЖапан' },
     shareEgo:  { kk: '{n}, мынау сіздің шежіреңіз',
@@ -170,8 +161,8 @@
     sonOfF:      { kk: '{n} ұлы', ru: 'мать: {n}' },
     dauOfF:      { kk: '{n} қызы', ru: 'мать: {n}' },
     kidOfF:      { kk: '{n} баласы', ru: 'мать: {n}' },
-    openedAs:  { kk: 'Сайт {n} ретінде ашылды · жоғарыдан ауыстыруға болады',
-                 ru: 'Сайт открыт как {n} · поменять можно в шапке' }
+    openedAs:  { kk: 'Шежіре {n} атынан ашылды',
+                 ru: 'Шежіре открыто от имени {n}' }
   };
 
   function t(key, vars) {
@@ -332,7 +323,6 @@
 
   /* Родство целевого человека к выбранному. */
   function relOf(id) {
-    if (!ego) return null;
     var r = KIN.relate(ego, id);
     if (!r) return null;
     return r;
@@ -353,16 +343,11 @@
     }
     return out.reverse();
   }
-  function mainLine() {
-    return DATA.people.filter(function (p) { return p.line === 'main'; })
-      .sort(function (a, b) { return (a.gen || 0) - (b.gen || 0); });
-  }
-
   var tape = document.getElementById('tape');
   var CHAIN = [];
 
   function renderTape() {
-    CHAIN = ego ? chainFor(ego) : mainLine();
+    CHAIN = chainFor(ego);
     tape.innerHTML = '';
     var lastEra = null;
 
@@ -448,7 +433,7 @@
     mid.appendChild(el('span', 'row-sub', sub.join(' · ')));
     row.appendChild(mid);
 
-    if (withRel && ego) {
+    if (withRel) {
       var r = relOf(p.id);
       var txt = p.id === ego ? t('me') : relText(r);
       if (txt) {
@@ -510,11 +495,8 @@
      на Адая, а на отца выбранного: вокруг сразу свои. */
   function focusPerson() {
     if (focusId && BY[focusId]) return focusId;
-    if (ego) {
-      var p = BY[ego];
-      return (p.parent && BY[p.parent]) ? p.parent : ego;
-    }
-    return ROOT;
+    var p = BY[ego];
+    return (p.parent && BY[p.parent]) ? p.parent : ego;
   }
 
   function ancestryOf(id) {
@@ -551,7 +533,6 @@
   }
   /* Строка под именем: кем этот человек приходится выбранному. */
   function roleLine(p) {
-    if (!ego) return '';
     if (p.id === ego) return t('me');
     var r = relOf(p.id);
     return (r && r.term) ? relText(r) : '';
@@ -1023,16 +1004,6 @@
     host.innerHTML = '';
     document.getElementById('kinHint').textContent = '';
 
-    if (!ego) {
-      var ask = el('button', 'cta', esc(t('kinAsk')));
-      ask.type = 'button';
-      ask.addEventListener('click', openPicker);
-      var wrap = el('div', 'kin-empty');
-      wrap.appendChild(ask);
-      host.appendChild(wrap);
-      return;
-    }
-
     var groups = {}, far = 0, near = 0;
     DATA.people.forEach(function (p) {
       if (p.id === ego) return;
@@ -1167,7 +1138,7 @@
     sheetBody.appendChild(el('p', 'card-meta', meta.join('  ·  ')));
 
     /* главное: кем он приходится выбранному */
-    if (ego && id !== ego) {
+    if (id !== ego) {
       var r = relOf(id);
       var box = el('div', 'rel' + (r && r.kind === 'unknown' ? ' is-gap' : ''));
       if (egoVia) {
@@ -1187,11 +1158,6 @@
         box.appendChild(chain);
       }
       sheetBody.appendChild(box);
-    } else if (!ego) {
-      var ask = el('button', 'rel is-ask', esc(t('noRel')));
-      ask.type = 'button';
-      ask.addEventListener('click', function () { closeSheet(); openPicker(); });
-      sheetBody.appendChild(ask);
     }
 
     if (p.note) sheetBody.appendChild(el('p', 'card-note', esc(p.note)));
@@ -1238,12 +1204,6 @@
     sheetBody.appendChild(jump);
 
     var actions = el('div', 'card-actions');
-    if (id !== ego) {
-      var b = el('button', 'card-act', esc(t('setMe')));
-      b.type = 'button';
-      b.addEventListener('click', function () { closeSheet(); setEgo(id, null); });
-      actions.appendChild(b);
-    }
     var sh = el('button', 'card-act', esc(t('share')));
     sh.type = 'button';
     sh.addEventListener('click', function () {
@@ -1252,9 +1212,9 @@
     actions.appendChild(sh);
     sheetBody.appendChild(actions);
 
-    /* Вторая ссылка — «это вы»: получатель откроет сайт уже
-       выбранным и увидит родство от себя, ничего не нажимая.
-       Предлагаем её тем, кто, судя по записям, жив. */
+    /* Вторая ссылка — вход для самого этого человека: открыв её,
+       он попадёт на сайт от своего имени. Так доступ и расходится
+       по родне. Предлагаем её тем, кто, судя по записям, жив. */
     if (id !== ego && maybeAlive(p)) {
       var shMe = el('button', 'card-share-me', esc(t('shareMe', { n: p.name })));
       shMe.type = 'button';
@@ -1343,76 +1303,6 @@
       if (Math.abs(dx) > 45) lbStep(dx < 0 ? 1 : -1);
     });
   })();
-
-  /* ── «Сіз кімсіз?» ──────────────────────────────────── */
-  var picker = document.getElementById('picker');
-  var pickInput = document.getElementById('pickInput');
-
-  function pickerRow(p) {
-    var wrap = el('div', 'pick-row');
-
-    var row = el('button', 'row');
-    row.type = 'button';
-    row.addEventListener('click', function () { closeLayer(); setEgo(p.id, null); });
-    row.appendChild(el('span', 'row-av', esc(p.name.charAt(0))));
-
-    var mid = el('span', 'row-mid');
-    mid.appendChild(el('span', 'row-name', esc(p.name)));
-    var sub = [];
-    var y = years(p); if (y) sub.push(esc(y));
-    if (p.parent && BY[p.parent]) sub.push(esc(BY[p.parent].name) +
-      (lang === 'kk' ? 'дың баласы' : ' — отец'));
-    mid.appendChild(el('span', 'row-sub', sub.join(' · ')));
-    row.appendChild(mid);
-    wrap.appendChild(row);
-
-    /* Жён и мужей в шежіре почти нет. Кто себя не нашёл — отмечается
-       супругом, и родство честно считается от его половины. */
-    var alt = el('button', 'pick-alt', esc(t('iamSpouse')));
-    alt.type = 'button';
-    alt.addEventListener('click', function () { closeLayer(); setEgo(p.id, p.id); });
-    wrap.appendChild(alt);
-
-    return wrap;
-  }
-
-  function renderPicker(q) {
-    var host = document.getElementById('pickList');
-    host.innerHTML = '';
-    q = fold((q || '').trim());
-    var list = DATA.people.filter(function (p) {
-      return !q || fold(p.name).indexOf(q) >= 0 ||
-             (p.alt && fold(p.alt).indexOf(q) >= 0);
-    });
-    if (!list.length) { host.appendChild(el('p', 'empty', t('nothing'))); return; }
-    list.sort(function (a, b) {
-      return (b.gen || 0) - (a.gen || 0) || (a.born || 9999) - (b.born || 9999);
-    }).slice(0, 80).forEach(function (p) { host.appendChild(pickerRow(p)); });
-  }
-
-  function openPicker() {
-    var skip = document.getElementById('pickSkip');
-    skip.textContent = t('pickSkip');
-    renderPicker(pickInput.value);
-    openLayer(picker, location.pathname);
-    setTimeout(function () { pickInput.focus(); }, 120);
-  }
-
-  function setEgo(id, via) {
-    ego = id; egoVia = via || null;
-    localStorage.setItem('az-ego', id);
-    if (via) localStorage.setItem('az-ego-via', via);
-    else localStorage.removeItem('az-ego-via');
-    paint();
-    /* С экрана «Туыс» выбор себя не уводит: там сразу видно,
-       ради чего его делали — родня уже разложена по полкам. */
-    if (view === 'kin') window.scrollTo(0, 0);
-    else showMeInTape();
-  }
-
-  /* Выбор себя должен быть виден. Иначе человек нажал — и, если он
-     стоит наверху страницы, на экране будто ничего не произошло. */
-  function showMeInTape() { showInTape(ego); }
 
   function inChain(id) {
     return CHAIN.some(function (p) { return p.id === id; });
@@ -1544,9 +1434,6 @@
   document.getElementById('searchInput').addEventListener('input', function () {
     search(this.value, document.getElementById('searchList'), true);
   });
-  pickInput.addEventListener('input', function () { renderPicker(this.value); });
-  document.getElementById('meBtn').addEventListener('click', openPicker);
-  document.getElementById('heroPick').addEventListener('click', openPicker);
 
   /* ── прокрутка ленты ────────────────────────────────── */
   var railNow = document.getElementById('railNow');
@@ -1606,21 +1493,20 @@
       b.classList.toggle('is-on', b.dataset.langSet === lang);
     });
 
-    document.getElementById('searchInput').placeholder = t('searchHint');
-    pickInput.placeholder = t('searchHint');
+    /* На пороге языком переключаются те же кнопки в шапке, но
+       рисовать сам сайт незачем: там ещё некому быть «вами». */
+    if (!ego) return;
 
-    var meLabel = document.getElementById('meLabel');
-    meLabel.textContent = !ego ? t('pickCta')
-      : BY[ego].name + (egoVia ? ' · ' + t('viaTag') : '');
-    document.getElementById('meBtn').classList.toggle('is-set', !!ego);
-    document.getElementById('heroPick').textContent =
-      ego ? t('pickAgain') : t('pickCta');
+    document.getElementById('searchInput').placeholder = t('searchHint');
+
+    document.getElementById('meTag').textContent =
+      BY[ego].name + (egoVia ? ' · ' + t('viaTag') : '');
     document.getElementById('heroHint').textContent =
-      ego ? (egoVia ? t('hintVia', { n: BY[egoVia].name }) : '') : t('hintNone');
+      egoVia ? t('hintVia', { n: BY[egoVia].name }) : '';
 
     renderTape();
     document.getElementById('railMain').innerHTML =
-      ego ? t('railMe', { n: CHAIN.length, o: ord(CHAIN.length) }) : t('railAny');
+      t('railMe', { n: CHAIN.length, o: ord(CHAIN.length) });
 
     if (view === 'kin') renderKin();
     if (view === 'tree') renderTree();
@@ -1669,16 +1555,21 @@
 
   applyTheme();
   paint();
+
+  /* Порог. Ключа нет — сайта нет: ни ленты, ни поиска, ни имён.
+     Шапка остаётся ради языка и темы, чтобы фраза на пороге
+     читалась на том языке, на котором человек её ждёт. */
+  if (!ego) {
+    document.body.classList.add('gated');
+    document.getElementById('gate').hidden = false;
+    return;
+  }
+
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
 
-  /* Пришёл по ссылке — показываем то, ради чего её прислали.
-     Иначе, если человек здесь впервые, спрашиваем, кто он. */
+  /* Пришёл по ссылке — здороваемся и показываем то, ради чего
+     её прислали. */
   if (linkMe) toast(t('openedAs', { n: BY[linkMe].name }));
-  if (linkP) {
-    openPerson(linkP);
-  } else if (!ego && !localStorage.getItem('az-asked')) {
-    localStorage.setItem('az-asked', '1');
-    setTimeout(openPicker, 700);
-  }
+  if (linkP) openPerson(linkP);
 })();

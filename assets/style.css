@@ -354,30 +354,15 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .view-head{max-width:760px; margin:0 auto; padding:34px 18px 8px; text-align:center}
 .view-head h2{font-size:clamp(26px,6.6vw,36px); color:var(--gold-soft); margin:0 0 8px}
 
-/* ── кнопка «кто вы» в шапке ────────────────────────────── */
-.me-btn{
-  appearance:none; cursor:pointer; max-width:38vw;
-  border:1px solid var(--line); border-radius:999px;
+/* ── имя открывшего, в шапке ────────────────────────────
+   Не кнопка: поменять «себя» нельзя, имя приходит со ссылкой. */
+.me-tag{
+  max-width:38vw; border:1px solid var(--line); border-radius:999px;
   background:color-mix(in srgb, var(--panel) 60%, transparent);
-  color:var(--muted); font-family:var(--f-body);
+  color:var(--gold); font-family:var(--f-body);
   font-size:11px; font-weight:600; letter-spacing:.1em;
   padding:8px 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  transition:color .3s var(--ease), border-color .3s var(--ease);
 }
-.me-btn.is-set{color:var(--gold)}
-.me-btn:hover{border-color:var(--gold); color:var(--gold)}
-
-.cta{
-  appearance:none; cursor:pointer; margin:18px auto 10px; display:block;
-  border:1px solid var(--gold); border-radius:999px;
-  background:transparent; color:var(--gold);
-  font-family:var(--f-body); font-size:12.5px; font-weight:600;
-  letter-spacing:.14em; text-transform:uppercase; padding:12px 24px;
-  transition:background .3s var(--ease), color .3s var(--ease),
-             transform .3s var(--spring);
-}
-.cta:hover{background:var(--gold); color:var(--bg); transform:translateY(-2px)}
-.cta:active{transform:scale(.97)}
 
 /* ── карточка шага стала кнопкой ────────────────────────── */
 .step-card{
@@ -515,10 +500,6 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   padding:14px 16px; margin:0 0 16px; text-align:center;
 }
 .rel.is-gap{border-color:var(--line-soft); background:none}
-.rel.is-ask{
-  appearance:none; cursor:pointer; width:100%; font-family:var(--f-body);
-  font-size:13px; color:var(--gold); border-style:dashed;
-}
 .rel-term{
   margin:0; font-family:var(--f-display); font-size:clamp(22px,6vw,28px);
   line-height:1.2; color:var(--gold-soft);
@@ -569,13 +550,6 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 }
 .card-act:hover{background:var(--gold); color:var(--bg)}
 
-.picker .sheet-body{max-height:92svh}
-.picker-head{position:sticky; top:0; z-index:2; background:var(--bg-2); padding-bottom:6px}
-.picker-head h2{font-size:clamp(24px,6.4vw,30px); color:var(--gold-soft); text-align:center}
-.picker-head .muted{text-align:center; margin:8px 0 4px}
-.picker .search-box{padding-left:0; padding-right:0}
-.picker .list{padding-left:0; padding-right:0}
-
 @media (min-width:720px){
   .sheet{align-items:center}
   .sheet-body{border-radius:20px; max-height:84svh; padding-bottom:26px}
@@ -594,35 +568,10 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   .brand span{display:none}
   .brand{gap:0}
   .bar-tools{gap:6px; min-width:0}
-  .me-btn{max-width:44vw; padding:8px 11px; letter-spacing:.04em}
+  .me-tag{max-width:44vw; padding:8px 11px; letter-spacing:.04em}
   .seg-btn{padding:7px 9px; letter-spacing:.08em}
   .icon-btn{width:34px; height:34px}
 }
-
-/* ── выбор себя: строка и запасной вариант «я супруг(а)» ── */
-.pick-row{
-  display:flex; align-items:stretch; gap:6px;
-  border-bottom:1px solid var(--line-soft);
-}
-.pick-row .row{border-bottom:0; flex:1; min-width:0}
-.pick-alt{
-  appearance:none; cursor:pointer; flex:none; align-self:center;
-  border:1px solid var(--line-soft); border-radius:999px;
-  background:transparent; color:var(--muted);
-  font-family:var(--f-body); font-size:10.5px; font-weight:600;
-  letter-spacing:.08em; padding:7px 10px; white-space:nowrap;
-  transition:border-color .25s var(--ease), color .25s var(--ease);
-}
-.pick-alt:hover{border-color:var(--gold); color:var(--gold)}
-
-.pick-skip{
-  appearance:none; cursor:pointer; display:block; margin:10px auto 2px;
-  border:0; background:transparent; color:var(--muted);
-  font-family:var(--f-body); font-size:12px; letter-spacing:.14em;
-  text-transform:uppercase; padding:6px 12px;
-  transition:color .25s var(--ease);
-}
-.pick-skip:hover{color:var(--gold)}
 
 .rel-via{
   margin:0 0 5px; font-size:10.5px; font-weight:600; letter-spacing:.18em;
@@ -643,13 +592,33 @@ main{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .card-share-me{
   appearance:none; cursor:pointer; display:block; width:100%;
   margin:8px 0 2px; padding:11px 14px;
-  border:1px dashed var(--line-soft); border-radius:14px;
-  background:transparent; color:var(--muted);
+  border:1px solid var(--gold-dim); border-radius:14px;
+  background:color-mix(in srgb, var(--gold) 7%, transparent); color:var(--gold-soft);
   font-family:var(--f-body); font-size:12.5px; line-height:1.45;
   text-align:center;
   transition:border-color .25s var(--ease), color .25s var(--ease);
 }
 .card-share-me:hover{border-color:var(--gold); color:var(--gold)}
+
+/* ── порог ──────────────────────────────────────────────
+   Тот же язык, что и на обложке: свечение, ключевые слова,
+   орнамент. Разница одна — дальше идти некуда. */
+.gated main, .gated .nav{display:none}
+/* На пороге имени ещё нет — пустая таблетка в шапке ни к чему. */
+.gated .me-tag{display:none}
+.gate{
+  position:fixed; inset:0; z-index:70; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(var(--bar-h) + 24px) 22px 40px; text-align:center;
+  background:var(--bg);
+}
+.gate .hero-glow{top:44%}
+.gate-in{position:relative; z-index:2; max-width:520px}
+.gate-line{
+  font-family:var(--f-display); font-size:clamp(19px,5vw,25px);
+  color:var(--gold-soft); margin:0 0 12px; line-height:1.3;
+}
+.gate-note{color:var(--muted); font-size:14px; line-height:1.6; margin:0}
 
 /* Подсказка встаёт сверху, под шапкой: снизу она накрывала бы
    нижние кнопки карточки — а речь как раз про них. */
@@ -919,7 +888,6 @@ body.locked .toast.is-on{transform:translate(-50%,0)}
   margin:10px 0 0; font-size:11px; font-weight:600; letter-spacing:.16em;
   text-transform:uppercase; color:var(--gold-dim);
 }
-.kin-empty{display:flex; justify-content:center; padding:26px 12px}
 
 /* ── кнопка в углу карточки: назад по шагам или закрыть ─── */
 .card-back{
@@ -1008,7 +976,6 @@ body.locked .toast.is-on{transform:translate(-50%,0)}
 @media (max-width:719px){
   .sheet{padding-bottom:calc(61px + env(safe-area-inset-bottom))}
   .sheet-body{max-height:calc(88svh - 61px); padding-bottom:26px}
-  .picker .sheet-body{max-height:calc(92svh - 61px)}
   .lb{padding-bottom:calc(61px + env(safe-area-inset-bottom))}
   .lb-fig{max-height:calc(100svh - 190px)}
   .lb-fig img{max-height:calc(100svh - 250px)}
