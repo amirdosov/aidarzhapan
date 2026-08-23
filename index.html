@@ -17,9 +17,27 @@
 
 <!-- ═══ шежіре как приложение ═══
      Значок на экране телефона, запуск без браузера, чтение без
-     интернета. Личный адрес запуска подставляет app.js: в файле
-     его быть не может — он у каждого свой. -->
+     интернета. Личного ключа в манифесте нет и быть не может —
+     он у каждого свой; на Android его подставляет app.js, на
+     iPhone манифест снимается вовсе, см. скрипт следом. -->
 <link rel="manifest" href="manifest.webmanifest" id="manifest">
+<script>
+/* iPhone. «Негізгі бетке қосу» спрашивает у манифеста, с какого
+   адреса запускать значок, — а личного ключа в файле нет и быть
+   не может: он у каждого свой. Подложить манифест на ходу нельзя,
+   Safari читает его один раз при загрузке. Зато без манифеста он
+   поступает по-старому: запоминает адрес, открытый в эту минуту,
+   а там ключ и стоит (app.js его на iPhone не вычищает).
+   Всё остальное — имя, значок, запуск без браузерной шапки —
+   на iPhone и так берётся из apple-меток ниже. */
+(function () {
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!ios) return;
+  var l = document.getElementById('manifest');
+  if (l && l.parentNode) l.parentNode.removeChild(l);
+})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -309,7 +327,7 @@
 <script src="data/stories.js?v=2"></script>
 <script src="assets/photos.js?v=2"></script>
 <script src="assets/kinship.js?v=2"></script>
-<script src="assets/app.js?v=21"></script>
+<script src="assets/app.js?v=22"></script>
 
 <!-- ═══ работник ═══
      Держит шежіре в телефоне: открывается без сети и без браузера.

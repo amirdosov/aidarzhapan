@@ -18,6 +18,12 @@
      шрифты        — из запаса, они тем более.
    ══════════════════════════════════════════════════════════ */
 
+/* На localhost шежіре не читают, а правят: там запас только мешает —
+   файл поменялся, адрес прежний, и работник отдаёт вчерашнее. Поэтому
+   дома сперва сеть, а запас остаётся про запас — офлайн проверить. */
+var DEV = self.location.hostname === 'localhost' ||
+          self.location.hostname === '127.0.0.1';
+
 var SHELL = 'az-shell-1';   /* страница и «последние известные» файлы */
 var ASSET = 'az-asset-1';   /* файлы по точному адресу, с ?v=         */
 var PHOTO = 'az-photo-1';
@@ -152,11 +158,11 @@ self.addEventListener('fetch', function (e) {
 
   e.respondWith(
     caches.match(req).then(function (hit) {
-      if (hit) return hit;
+      if (hit && !DEV) return hit;
       return fromNet(req, ASSET, true).catch(function () {
         /* Сети нет, а адрес новый: шежіре бумажным не станет —
            отдаём последнюю версию этого же файла. */
-        return caches.match(bare(req.url));
+        return hit || caches.match(bare(req.url));
       });
     })
   );

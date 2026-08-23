@@ -106,6 +106,14 @@
      открытая перебивает прежнюю.
      Разобрали — и сразу чистим адрес: дальше историей
      распоряжается сам сайт, слоями. */
+  /* Про телефон нужно знать заранее: от этого зависит, чистить ли
+     адрес. Подробнее — в разделе «шежіре как приложение» ниже. */
+  var standalone = (window.matchMedia &&
+                    matchMedia('(display-mode: standalone)').matches) ||
+                   navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
   var Q      = new URLSearchParams(location.search);
   var linkP  = Q.get('p');
   if (linkP && !BY[linkP]) linkP = null;
@@ -122,10 +130,28 @@
     else store.removeItem('az-ego-via');
   }
   /* Адрес чистим сразу — дальше историей распоряжаются слои.
-     Но если помнить некуда, ключ из адреса убирать нельзя: он там
-     единственное, что удержит человека внутри при перезагрузке. */
-  if (!store.weak && (location.search || location.hash)) {
-    history.replaceState(null, '', location.pathname);
+     Но не всегда.
+
+     Первое: если помнить некуда, ключ из адреса убирать нельзя —
+     он там единственное, что удержит человека внутри
+     при перезагрузке.
+
+     Второе: iPhone. «Негізгі бетке қосу» запоминает тот адрес,
+     который открыт в эту минуту, — и с него потом запускает
+     значок. Память у приложения своя, Safari ему ничего не
+     передаёт: убрали ключ из адреса — значок открылся на пороге
+     и просит ключ, которого у человека уже нет под рукой.
+     Поэтому на iPhone ключ живёт в адресе всё время, и все наши
+     записи в историю носят его хвостом. Некрасиво, зато значок
+     открывается своим именем.
+
+     Манифест тут не спасает: подложенный на ходу Safari не читает,
+     он взял свой при загрузке страницы. Поэтому на iPhone манифест
+     вовсе снимается — в шапке страницы, до всего прочего. */
+  var TAIL = '';
+  if (isIOS && !standalone && ego) TAIL = '#' + keyOf(ego, !!egoVia);
+  if (!store.weak && (location.search || location.hash || TAIL)) {
+    history.replaceState(null, '', location.pathname + TAIL);
   }
 
   /* ── тексты интерфейса ──────────────────────────────── */
@@ -258,8 +284,15 @@
                        '„Домой“»' },
     popLater:    { kk: 'Кейінірек', ru: 'Позже' },
 
-    gateKeyLabel:{ kk: 'Сілтемеңіз бар ма? Осында қойыңыз',
-                   ru: 'Ссылка у вас есть? Вставьте её сюда' },
+    gateNoteApp: { kk: 'Сізге WhatsApp-та келген сілтемені көшіріңіз де, ' +
+                       'төмендегі жолаққа қойыңыз. Бір рет қана: содан ' +
+                       'кейін шежіре осы белгішеден өз атыңыздан ашылады.',
+                   ru: 'Скопируйте ссылку, которую вам прислали в WhatsApp, ' +
+                       'и вставьте её в поле ниже. Это нужно один раз: ' +
+                       'дальше шежіре будет открываться с этого значка ' +
+                       'от вашего имени.' },
+    gateKeyLabel:{ kk: 'Сілтемені осында қойыңыз',
+                   ru: 'Вставьте ссылку сюда' },
     gateKeyHint: { kk: 'сілтеме немесе кілт', ru: 'ссылка или ключ' },
     gateKeyGo:   { kk: 'Ашу', ru: 'Открыть' },
     gateKeyNo:   { kk: 'Мұндай сілтеме таныс емес',
@@ -1442,10 +1475,11 @@
     /* Карточка живёт по своему адресу — его можно скопировать
        прямо из строки браузера и отправить как есть. */
     if (!pushed) {
-      history.pushState({ layer: true }, '', url || null);
+      history.pushState({ layer: true }, '', url ? url + TAIL : null);
       pushed = true;
     } else {
-      history.replaceState({ layer: true }, '', url || location.pathname);
+      history.replaceState({ layer: true }, '',
+                           url ? url + TAIL : location.pathname + TAIL);
     }
   }
   /* Прячем сразу и только потом трогаем историю. Наоборот было
@@ -1454,7 +1488,9 @@
   function closeLayer() {
     hideLayer();
     if (pushed) { pushed = false; history.back(); }
-    else if (location.search) history.replaceState(null, '', location.pathname);
+    else if (location.search) {
+      history.replaceState(null, '', location.pathname + TAIL);
+    }
   }
   function hideLayer() {
     if (lbOpen) { lbPushed = false; hideLB(); }
@@ -1664,13 +1700,10 @@
      без браузера, чтение без интернета. Дальше — то, без чего
      это осталось бы значком с порогом за ним. */
 
-  var standalone = (window.matchMedia &&
-                    matchMedia('(display-mode: standalone)').matches) ||
-                   navigator.standalone === true;
-  /* iPhone сам ничего не предлагает: там это делают руками,
-     через «Поделиться». Значит нужно хотя бы сказать, где искать. */
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  /* `standalone` и `isIOS` посчитаны в самом начале: от них зависит
+     ещё и чистка адреса. iPhone сам поставить не предлагает — там
+     это делают руками, через «Поделиться», и наше дело сказать,
+     где эту кнопку искать. */
 
   /* ── свой адрес запуска ────────────────────────────────
      Значок открывает сайт по адресу из манифеста — а там ключа
@@ -1834,6 +1867,13 @@
     var form = document.getElementById('gateKey');
     if (!form) return;
     form.hidden = false;
+    /* На пороге внутри приложения говорим не «ссылка открывает
+       шежіре», а прямо: где эту ссылку взять и что с ней сделать. */
+    var note = document.querySelector('.gate-note');
+    if (note) {
+      note.dataset.i18n = 'gateNoteApp';
+      note.textContent = t('gateNoteApp');
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var s = (document.getElementById('gateKeyInput').value || '').trim();
