@@ -246,6 +246,18 @@
                        'бетке қосу». Шежіре интернетсіз де ашылады',
                    ru: 'Поставить на телефон: «Поделиться» внизу → «На ' +
                        'экран „Домой“». Шежіре откроется и без интернета' },
+    popTitle:    { kk: 'Шежірені телефонға қойыңыз',
+                   ru: 'Поставьте шежіре на телефон' },
+    popLine:     { kk: 'Экранда белгіше пайда болады. Шежіре браузерсіз ' +
+                       'ашылады, интернет жоқ жерде де оқылады',
+                   ru: 'На экране появится значок. Шежіре открывается без ' +
+                       'браузера и читается там, где нет интернета' },
+    popIos:      { kk: 'Астындағы {s} батырмасын басып, «Негізгі бетке ' +
+                       'қосу» дегенді таңдаңыз',
+                   ru: 'Нажмите {s} внизу экрана и выберите «На экран ' +
+                       '„Домой“»' },
+    popLater:    { kk: 'Кейінірек', ru: 'Позже' },
+
     gateKeyLabel:{ kk: 'Сілтемеңіз бар ма? Осында қойыңыз',
                    ru: 'Ссылка у вас есть? Вставьте её сюда' },
     gateKeyHint: { kk: 'сілтеме немесе кілт', ru: 'ссылка или ключ' },
@@ -1603,6 +1615,8 @@
     document.getElementById('heroHint').textContent =
       egoVia ? t('hintVia', { n: BY[egoVia].name }) : '';
 
+    if (popNode && !popNode.hidden) paintPop();
+
     renderTape();
     document.getElementById('railMain').innerHTML =
       t('railMe', { n: CHAIN.length, o: ord(CHAIN.length) });
@@ -1706,10 +1720,14 @@
     e.preventDefault();
     installOffer = e;
     offerInstall('installNote', true);
+    /* Android объявляется когда захочет: если время окна уже
+       вышло, показываем его сейчас — с кнопкой. */
+    if (popDue) popShow();
   });
   window.addEventListener('appinstalled', function () {
     installOffer = null;
     if (installBox) installBox.hidden = true;
+    popHide('done');
   });
   if (installBtn) installBtn.addEventListener('click', function () {
     if (!installOffer) return;
@@ -1718,6 +1736,93 @@
     installBtn.hidden = true;
   });
   if (isIOS) offerInstall('installIos', false);
+
+  /* ── окно «поставьте на телефон» ───────────────────────
+     Тихой строки в подвале мало: родня до подвала не доходит,
+     а сама догадаться, что сайт можно держать значком, не может —
+     про такое просто не знают. Поэтому спрашиваем прямо, крупно
+     и один раз: закрыли — больше не возвращаемся, строка внизу
+     остаётся для тех, кто передумает.
+
+     Ждём. Окно на первой секунде — разговор о хранении с тем,
+     кто ещё не знает, что ему предлагают. Через три четверти
+     минуты человек уже полистал своих предков, и ответ у него
+     есть. */
+  var POP_WAIT = 45000;
+  var popNode  = document.getElementById('pop');
+  var popDue   = false;
+  var popShown = false;
+
+  /* Значок «поделиться» с iPhone: без него подсказка отсылает
+     к кнопке, которую человек глазами не находит. */
+  var IOS_SHARE = '<svg class="pop-ios-ico" viewBox="0 0 24 24" ' +
+    'aria-hidden="true"><path d="M12 3v12M12 3l-3.4 3.4M12 3l3.4 3.4"/>' +
+    '<path d="M6.5 11H5.2A1.2 1.2 0 0 0 4 12.2v7.6A1.2 1.2 0 0 0 5.2 21h13.6' +
+    'a1.2 1.2 0 0 0 1.2-1.2v-7.6A1.2 1.2 0 0 0 18.8 11h-1.3"/></svg>';
+
+  function paintPop() {
+    if (!popNode) return;
+    document.getElementById('popTitle').textContent = t('popTitle');
+    document.getElementById('popLine').textContent  = t('popLine');
+    document.getElementById('popBtn').textContent   = t('installAct');
+    document.getElementById('popLater').textContent = t('popLater');
+    document.getElementById('popIos').innerHTML =
+      esc(t('popIos')).split('{s}').join(IOS_SHARE);
+  }
+
+  function popShow() {
+    popDue = true;
+    if (popShown || !popNode || standalone || !ego) return;
+    if (store.getItem('az-install')) return;        /* уже отвечали */
+    if (!installOffer && !isIOS) return;            /* поставить нечем */
+    /* Разговор про телефон ведём на телефоне: на большом экране
+       хватает строки в подвале. */
+    if (!(navigator.maxTouchPoints > 0 || Math.min(innerWidth, innerHeight) <= 820)) return;
+    /* Поверх открытой карточки не лезем — человек читает. */
+    if (layer) { setTimeout(popShow, 30000); return; }
+
+    popShown = true;
+    paintPop();
+    document.getElementById('popBtn').hidden = !installOffer;
+    document.getElementById('popIos').hidden = !!installOffer || !isIOS;
+    popNode.hidden = false;
+    void popNode.offsetWidth;
+    popNode.classList.add('is-on');
+  }
+
+  /* Ответ запоминаем, чтобы не спрашивать снова: 'later' — «позже»,
+     'done' — уже поставили. */
+  function popHide(mark) {
+    if (!popNode) return;
+    popNode.classList.remove('is-on');
+    setTimeout(function () { popNode.hidden = true; }, 340);
+    if (mark) store.setItem('az-install', mark);
+  }
+
+  if (popNode) {
+    popNode.addEventListener('click', function (e) {
+      if (e.target.hasAttribute('data-pop-close')) popHide('later');
+    });
+    document.getElementById('popLater').addEventListener('click', function () {
+      popHide('later');
+    });
+    document.getElementById('popBtn').addEventListener('click', function () {
+      if (!installOffer) return popHide('later');
+      installOffer.prompt();
+      var offer = installOffer;
+      installOffer = null;
+      popHide(null);
+      offer.userChoice.then(function (r) {
+        store.setItem('az-install', r && r.outcome === 'accepted' ? 'done' : 'later');
+      }).catch(function () {});
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !popNode.hidden) popHide('later');
+    });
+    if (!standalone && ego && !store.getItem('az-install')) {
+      setTimeout(popShow, POP_WAIT);
+    }
+  }
 
   /* ── порог внутри приложения ───────────────────────────
      Ссылку из WhatsApp телефон откроет браузером, а не значком,
